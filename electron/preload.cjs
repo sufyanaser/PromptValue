@@ -17,5 +17,15 @@ contextBridge.exposeInMainWorld('PromptVault', {
   },
   theme: {
     setTheme: (theme) => ipcRenderer.invoke('theme:set', theme)
+  },
+  updater: {
+    onUpdateDownloaded: (callback) => {
+      const listener = () => callback();
+      ipcRenderer.on('updater:downloaded', listener);
+      return () => {
+        ipcRenderer.removeListener('updater:downloaded', listener);
+      };
+    },
+    relaunch: () => ipcRenderer.send('updater:relaunch')
   }
 });

@@ -106,6 +106,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for auto-update downloaded events from Electron
+  useEffect(() => {
+    const pv = (window as any).PromptVault;
+    if (pv && pv.updater && pv.updater.onUpdateDownloaded) {
+      const unsubscribe = pv.updater.onUpdateDownloaded(() => {
+        confirm({
+          title: "تحديث متوفر",
+          message: "تحديث جديد جاهز للتثبيت. هل تريد إعادة تشغيل التطبيق وتثبيت التحديث الآن؟",
+          confirmText: "Relaunch",
+          cancelText: "لاحقاً",
+          type: "info",
+          onConfirm: () => {
+            pv.updater.relaunch();
+          }
+        });
+      });
+      return unsubscribe;
+    }
+  }, []);
+
   useEffect(() => {
     localStore.save(data);
     

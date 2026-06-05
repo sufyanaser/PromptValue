@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, nativeTheme, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -27,7 +28,16 @@ function createWindow() {
 
   win.once('ready-to-show', () => {
     win.show();
-    win.webContents.openDevTools();
+    if (process.env.ELECTRON_DEVTOOLS === '1') {
+      win.webContents.openDevTools();
+    }
+    
+    // Check for updates if app is packaged (production build)
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+        console.error('[Updater] Initial check failed:', err);
+      });
+    }
   });
 }
 
@@ -138,4 +148,40 @@ ipcMain.handle('storage:load', async () => {
     console.error('[Electron] Failed to load database:', err);
     return null;
   }
+});
+
+// Configure Auto-Updater
+autoUpdater.autoDownload = true;
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('[Updater] Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('[Updater] Update available:', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('[Updater] Update not available:', info);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log(`[Updater] Download progress: ${progressObj.percent}%`);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[Updater] Update downloaded:', info);
+  const win = BrowserWindow.getAllWindows()[0];
+  if (win) {
+    win.webContents.send('updater:downloaded');
+  }
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('[Updater] Error checking/downloading update:', err);
+});
+
+// Handle relaunch request from renderer
+ipcMain.on('updater:relaunch', () => {
+  autoUpdater.quitAndInstall();
 });
