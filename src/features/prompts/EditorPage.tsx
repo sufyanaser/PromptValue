@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useApp } from '../../app/app-provider';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -7,7 +7,7 @@ import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity } from 'lucide-react';
+import { Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity, Image } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Prompt } from '../../types';
 import Markdown from 'react-markdown';
@@ -16,6 +16,71 @@ export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, addPrompt, updatePrompt } = useApp();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertTextAtCursor = (before: string, after: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content;
+    
+    const selectedText = text.substring(start, end);
+    const replacement = before + selectedText + after;
+    
+    const newContent = text.substring(0, start) + replacement + text.substring(end);
+    setFormData(prev => ({ ...prev, content: newContent }));
+
+    // Reset selection focus
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
+    }, 50);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              const base64Url = event.target.result as string;
+              insertTextAtCursor(`\n![image.png](${base64Url})\n`, '');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const base64Url = event.target.result as string;
+          insertTextAtCursor(`![${file.name}](${base64Url})`, '');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleImageToolbarClick = () => {
+    const input = document.getElementById('editor-image-uploader');
+    input?.click();
+  };
   
   const existingPrompt = id ? data.prompts.find(p => p.id === id) : null;
 
@@ -79,18 +144,19 @@ export function EditorPage() {
   }, []);
 
   const toolbarButtons = [
-    { icon: Bold, label: 'عريض' },
-    { icon: Italic, label: 'مائل' },
-    { icon: Underline, label: 'تسطير' },
-    { icon: Strikethrough, label: 'يتوسطه خط' },
-    { icon: AlignRight, label: 'محاذاة لليمين' },
-    { icon: AlignCenter, label: 'توسيط' },
-    { icon: AlignLeft, label: 'محاذاة لليسرى' },
-    { icon: List, label: 'قائمة نقطية' },
-    { icon: ListOrdered, label: 'قائمة رقمية' },
-    { icon: Quote, label: 'اقتباس' },
-    { icon: Code, label: 'كود برمجى' },
-    { icon: LinkIcon, label: 'رابط' },
+    { icon: Bold, label: 'عريض', action: () => insertTextAtCursor('**', '**') },
+    { icon: Italic, label: 'مائل', action: () => insertTextAtCursor('*', '*') },
+    { icon: Underline, label: 'تسطير', action: () => insertTextAtCursor('<u>', '</u>') },
+    { icon: Strikethrough, label: 'يتوسطه خط', action: () => insertTextAtCursor('~~', '~~') },
+    { icon: AlignRight, label: 'محاذاة لليمين', action: () => insertTextAtCursor('<div align="right">\n', '\n</div>') },
+    { icon: AlignCenter, label: 'توسيط', action: () => insertTextAtCursor('<div align="center">\n', '\n</div>') },
+    { icon: AlignLeft, label: 'محاذاة لليسرى', action: () => insertTextAtCursor('<div align="left">\n', '\n</div>') },
+    { icon: List, label: 'قائمة نقطية', action: () => insertTextAtCursor('- ') },
+    { icon: ListOrdered, label: 'قائمة رقمية', action: () => insertTextAtCursor('1. ') },
+    { icon: Quote, label: 'اقتباس', action: () => insertTextAtCursor('> ') },
+    { icon: Code, label: 'كود برمجى', action: () => insertTextAtCursor('`', '`') },
+    { icon: LinkIcon, label: 'رابط', action: () => insertTextAtCursor('[رابط](', ')') },
+    { icon: Image, label: 'صورة', action: () => handleImageToolbarClick() }
   ];
 
   return (
@@ -212,7 +278,8 @@ export function EditorPage() {
                     key={i} 
                     type="button" 
                     title={btn.label}
-                    className="p-2 hover:bg-border/30 rounded-lg text-slate-600 dark:text-slate-300 transition-colors"
+                    onClick={btn.action}
+                    className="p-2 hover:bg-border/30 rounded-lg text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
                   >
                     <btn.icon className="w-3.5 h-3.5" />
                   </button>
@@ -223,7 +290,16 @@ export function EditorPage() {
             <CardContent className="p-0">
                {viewMode === 'edit' ? (
                  <div className="relative">
+                   <input
+                     id="editor-image-uploader"
+                     type="file"
+                     accept="image/*"
+                     className="hidden"
+                     onChange={handleImageUpload}
+                   />
                    <Textarea
+                      ref={textareaRef}
+                      onPaste={handlePaste}
                       placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية."
                       className="min-h-[350px] font-mono leading-relaxed border-none rounded-none focus:border-none shadow-none bg-transparent"
                       value={formData.content}
