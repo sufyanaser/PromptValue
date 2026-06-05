@@ -7,7 +7,7 @@ import { History, Shield, Cloud, HardDrive, RefreshCw, Trash2, CheckCircle } fro
 import { Badge } from '../../components/ui/Badge';
 
 export function BackupsPage() {
-  const { data, createBackup, restoreBackup, deleteBackup, showToast } = useApp();
+  const { data, createBackup, restoreBackup, deleteBackup, showToast, confirm } = useApp();
 
   const handleCreateBackup = () => {
     createBackup('manual');
@@ -15,16 +15,30 @@ export function BackupsPage() {
   };
 
   const handleRestore = (id: string) => {
-    if (confirm('هل أنت متأكد من رغبتك في استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية بالبيانات المحفوظة في هذه النسخة.')) {
-      restoreBackup(id);
-      showToast('تم استعادة النسخة الاحتياطية بنجاح!', 'success');
-    }
+    confirm({
+      title: 'استعادة النسخة الاحتياطية',
+      message: 'هل أنت متأكد من رغبتك في استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية بالبيانات المحفوظة في هذه النسخة.',
+      type: 'warning',
+      confirmText: 'استعادة',
+      cancelText: 'إلغاء',
+      onConfirm: () => {
+        restoreBackup(id);
+        showToast('تم استعادة النسخة الاحتياطية بنجاح!', 'success');
+      }
+    });
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية؟')) {
-      deleteBackup(id);
-    }
+    confirm({
+      title: 'حذف النسخة الاحتياطية',
+      message: 'هل أنت متأكد من رغبتك في حذف هذه النسخة الاحتياطية؟',
+      type: 'danger',
+      confirmText: 'حذف',
+      cancelText: 'إلغاء',
+      onConfirm: () => {
+        deleteBackup(id);
+      }
+    });
   };
 
   return (

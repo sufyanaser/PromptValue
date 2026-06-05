@@ -44,7 +44,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 export function NotepadView() {
-  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast } = useApp();
+  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm } = useApp();
   
   // Folders State loaded from local storage
   const [folders, setFolders] = useState<FolderType[]>(() => {
@@ -196,10 +196,17 @@ export function NotepadView() {
   };
 
   const handleDeletePrompt = (id: string) => {
-    if (confirm('هل أنت متأكد من رغبتك في حذف هذا البرومبت؟')) {
-      deletePrompt(id);
-      showToast('تم حذف البرومبت بنجاح', 'info');
-    }
+    confirm({
+      title: 'حذف البرومبت',
+      message: 'هل أنت متأكد من رغبتك في حذف هذا البرومبت؟',
+      type: 'danger',
+      confirmText: 'حذف',
+      cancelText: 'إلغاء',
+      onConfirm: () => {
+        deletePrompt(id);
+        showToast('تم حذف البرومبت بنجاح', 'info');
+      }
+    });
   };
 
   const handleAddFolder = () => {

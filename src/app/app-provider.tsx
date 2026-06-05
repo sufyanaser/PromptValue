@@ -11,6 +11,16 @@ interface Toast {
   type: 'success' | 'info' | 'warning' | 'danger';
 }
 
+export interface ConfirmOptions {
+  title?: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning' | 'info';
+}
+
 interface AppContextType {
   data: AppData;
   updateData: (newData: Partial<AppData>) => void;
@@ -33,6 +43,7 @@ interface AppContextType {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'danger') => void;
   viewMode: 'detailed' | 'notepad';
   setViewMode: (mode: 'detailed' | 'notepad') => void;
+  confirm: (options: ConfirmOptions) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -44,6 +55,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewModeState] = useState<'detailed' | 'notepad'>(
     data.settings.defaultView === 'notepad' ? 'notepad' : 'detailed'
   );
+  const [confirmState, setConfirmState] = useState<ConfirmOptions & { isOpen: boolean }>({
+    isOpen: false,
+    message: '',
+    onConfirm: () => {},
+  });
+
+  const confirm = (options: ConfirmOptions) => {
+    setConfirmState({
+      ...options,
+      isOpen: true,
+    });
+  };
 
   const setViewMode = (mode: 'detailed' | 'notepad') => {
     setViewModeState(mode);
@@ -292,10 +315,106 @@ export function AppProvider({ children }: { children: ReactNode }) {
       duplicatePrompt,
       showToast,
       viewMode,
-      setViewMode
+      setViewMode,
+      confirm
     }}>
       {children}
       
+      {/* Custom Confirm Modal */}
+      <AnimatePresence>
+        {confirmState.isOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 select-none">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (confirmState.onCancel) confirmState.onCancel();
+                setConfirmState(prev => ({ ...prev, isOpen: false }));
+              }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto"
+            />
+            
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className={cn(
+                "relative w-full max-w-md p-6 rounded-3xl border glass shadow-2xl z-10 transition-colors duration-200 text-right pointer-events-auto",
+                theme === 'dark'
+                  ? "bg-surface-dark/95 border-border-dark text-text-dark"
+                  : "bg-white/95 border-border-light text-text-light"
+              )}
+            >
+              {/* Header Icon & Title */}
+              <div className="flex items-start gap-4 mb-4">
+                <div className={cn(
+                  "p-3 rounded-2xl shrink-0",
+                  confirmState.type === 'danger'
+                    ? "bg-danger/10 text-danger"
+                    : confirmState.type === 'warning'
+                    ? "bg-accent/10 text-accent"
+                    : "bg-info/10 text-info"
+                )}>
+                  {confirmState.type === 'danger' ? (
+                    <XCircle className="w-6 h-6" />
+                  ) : confirmState.type === 'warning' ? (
+                    <AlertTriangle className="w-6 h-6" />
+                  ) : (
+                    <Info className="w-6 h-6" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base font-black leading-snug">
+                    {confirmState.title || "تأكيد الإجراء"}
+                  </h3>
+                  <p className="text-xs font-bold leading-relaxed opacity-60 mt-1">
+                    {confirmState.message}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    if (confirmState.onCancel) confirmState.onCancel();
+                    setConfirmState(prev => ({ ...prev, isOpen: false }));
+                  }}
+                  className={cn(
+                    "flex-1 py-3 rounded-2xl text-xs font-black transition-all border outline-none hover:scale-[1.01] active:scale-[0.99] cursor-pointer",
+                    theme === 'dark'
+                      ? "bg-surface2-dark border-border-dark hover:bg-border-dark text-muted-dark hover:text-text-dark"
+                      : "bg-surface2-light border-border-light hover:bg-border-light text-muted-light hover:text-text-light"
+                  )}
+                >
+                  {confirmState.cancelText || "إلغاء"}
+                </button>
+                <button
+                  onClick={() => {
+                    confirmState.onConfirm();
+                    setConfirmState(prev => ({ ...prev, isOpen: false }));
+                  }}
+                  className={cn(
+                    "flex-1 py-3 rounded-2xl text-xs font-black text-white shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer",
+                    confirmState.type === 'danger'
+                      ? "bg-danger shadow-danger/25 hover:bg-danger/90"
+                      : confirmState.type === 'warning'
+                      ? "bg-accent shadow-accent/25 hover:bg-accent/90"
+                      : "bg-info shadow-info/25 hover:bg-info/90"
+                  )}
+                >
+                  {confirmState.confirmText || "موافق"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Toast Notifications Container */}
       <div className="fixed top-6 left-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none select-none">
         <AnimatePresence>

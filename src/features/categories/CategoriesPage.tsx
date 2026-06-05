@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/Button';
 const PRESET_COLORS = ['#3B82F6', '#F59E0B', '#EF4444', '#10B981', '#8B5CF6', '#EC4899', '#6366F1'];
 
 export function CategoriesPage() {
-  const { data, addCategory, updateCategory, deleteCategory } = useApp();
+  const { data, addCategory, updateCategory, deleteCategory, confirm } = useApp();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,9 +48,16 @@ export function CategoriesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ لن يتم حذف البرومبتات ولكن ستصبح بدون تصنيف.')) {
-      deleteCategory(id);
-    }
+    confirm({
+      title: 'حذف التصنيف',
+      message: 'هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ لن يتم حذف البرومبتات ولكن ستصبح بدون تصنيف.',
+      type: 'danger',
+      confirmText: 'حذف',
+      cancelText: 'إلغاء',
+      onConfirm: () => {
+        deleteCategory(id);
+      }
+    });
   };
 
   return (
