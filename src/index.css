@@ -71,3 +71,14 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-border/50 rounded-full hover:bg-border transition-colors;
 }
+
+/* Placeholder for contenteditable */
+[contenteditable]:empty:before {
+  content: attr(placeholder);
+  color: var(--color-muted-light);
+  opacity: 0.6;
+  cursor: text;
+}
+.dark [contenteditable]:empty:before {
+  color: var(--color-muted-dark);
+}

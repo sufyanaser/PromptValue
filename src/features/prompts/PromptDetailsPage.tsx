@@ -35,8 +35,23 @@ export function PromptDetailsPage() {
   const category = data.categories.find(c => c.id === prompt.categoryId);
 
   const handleCopy = (finalContent?: string) => {
-    const textToCopy = finalContent || prompt.content;
-    navigator.clipboard.writeText(textToCopy);
+    const html = finalContent || prompt.content;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+    try {
+      const blobHtml = new Blob([html], { type: 'text/html' });
+      const blobText = new Blob([plainText], { type: 'text/plain' });
+      const clipboardItem = new ClipboardItem({
+        'text/html': blobHtml,
+        'text/plain': blobText
+      });
+      navigator.clipboard.write([clipboardItem]);
+    } catch (err) {
+      navigator.clipboard.writeText(plainText);
+    }
+
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -83,18 +98,10 @@ export function PromptDetailsPage() {
     }
   };
 
-  // Helper: Highlight variables {variable}
-  const renderHighlightedContent = (text: string) => {
-    const parts = text.split(/(\{[^}]+\})/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('{') && part.endsWith('}')) {
-        return (
-          <span key={i} className="px-1.5 py-0.5 rounded bg-accent/10 text-accent font-black border border-accent/20 mx-0.5">
-            {part}
-          </span>
-        );
-      }
-      return part;
+  // Helper: Highlight variables {variable} in HTML content
+  const getHighlightedContentHtml = (html: string) => {
+    return html.replace(/(\{[^}]+\})/g, (match) => {
+      return `<span class="px-1.5 py-0.5 rounded bg-accent/10 text-accent font-black border border-accent/20 mx-0.5 inline-block font-sans">${match}</span>`;
     });
   };
 
@@ -157,9 +164,10 @@ export function PromptDetailsPage() {
           <Card className="min-h-[300px] bg-white dark:bg-surface-dark border-border/40">
             <CardHeader title="نص البرومبت" subtitle="معاينة النص مع إبراز المتغيرات" />
             <CardContent>
-              <div className="p-6 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/40 font-mono text-sm leading-loose whitespace-pre-wrap select-all">
-                {renderHighlightedContent(prompt.content)}
-              </div>
+              <div 
+                className="p-6 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/40 font-mono text-sm leading-loose whitespace-pre-wrap select-all"
+                dangerouslySetInnerHTML={{ __html: getHighlightedContentHtml(prompt.content) }}
+              />
             </CardContent>
           </Card>
 

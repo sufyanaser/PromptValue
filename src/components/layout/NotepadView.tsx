@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../app/app-provider';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -75,6 +75,36 @@ export function NotepadView() {
   );
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [activeFolderId, setActiveFolderId] = useState<string>('gemini');
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Sync contenteditable editor innerHTML when active prompt changes
+  useEffect(() => {
+    if (editorRef.current && selectedPrompt) {
+      if (editorRef.current.innerHTML !== selectedPrompt.content) {
+        editorRef.current.innerHTML = selectedPrompt.content;
+      }
+    }
+  }, [selectedPromptId, viewMode]);
+
+  const handleEditorInput = () => {
+    if (editorRef.current && selectedPrompt) {
+      const html = editorRef.current.innerHTML;
+      handleContentChange(html);
+    }
+  };
+
+  const execFormat = (command: string, value: string = '') => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    handleEditorInput();
+  };
+
+  const insertLink = () => {
+    const url = prompt('أدخل الرابط:');
+    if (url) {
+      execFormat('createLink', url);
+    }
+  };
 
   // Font/Size states
   const [fontFamily, setFontFamily] = useState<string>('font-sans');
@@ -83,6 +113,14 @@ export function NotepadView() {
   const [isPenDropdownOpen, setIsPenDropdownOpen] = useState(false);
   const [isHighlighterDropdownOpen, setIsHighlighterDropdownOpen] = useState(false);
   const [alignment, setAlignment] = useState<'right' | 'center' | 'left' | 'justify'>('right');
+
+  const handleAlignmentChange = (alignType: 'right' | 'center' | 'left' | 'justify') => {
+    setAlignment(alignType);
+    if (alignType === 'right') execFormat('justifyRight');
+    else if (alignType === 'center') execFormat('justifyCenter');
+    else if (alignType === 'left') execFormat('justifyLeft');
+    else if (alignType === 'justify') execFormat('justifyFull');
+  };
 
   // Prompt Rename States
   const [renamingPromptId, setRenamingPromptId] = useState<string | null>(null);
@@ -231,7 +269,9 @@ export function NotepadView() {
       reader.onload = (event) => {
         if (event.target?.result) {
           const base64Url = event.target.result as string;
-          insertTextAtCursor(`![${file.name}](${base64Url})`, '');
+          editorRef.current?.focus();
+          document.execCommand('insertImage', false, base64Url);
+          handleEditorInput();
           showToast('تم رفع الصورة وإدراجها بنجاح', 'success');
         }
       };
@@ -245,7 +285,7 @@ export function NotepadView() {
     input?.click();
   };
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     const items = e.clipboardData?.items;
     if (!items) return;
 
@@ -259,7 +299,9 @@ export function NotepadView() {
           reader.onload = (event) => {
             if (event.target?.result) {
               const base64Url = event.target.result as string;
-              insertTextAtCursor(`\n![image.png](${base64Url})\n`, '');
+              editorRef.current?.focus();
+              document.execCommand('insertImage', false, base64Url);
+              handleEditorInput();
               showToast('تم لصق الصورة وإدراجها بنجاح', 'success');
             }
           };
@@ -329,63 +371,27 @@ export function NotepadView() {
   };
 
   // Rich Formatting Helpers
-  const insertTextAtCursor = (before: string, after: string = '') => {
-    const textarea = document.getElementById('notepad-textarea') as HTMLTextAreaElement;
-    if (!textarea || !selectedPrompt) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = selectedPrompt.content;
-    
-    const selectedText = text.substring(start, end);
-    const replacement = before + selectedText + after;
-    
-    const newContent = text.substring(0, start) + replacement + text.substring(end);
-    handleContentChange(newContent);
-
-    // Reset selection focus
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
-    }, 50);
-  };
-
   const insertHeader = (headerTag: string) => {
-    insertTextAtCursor(`${headerTag} `, '\n');
+    const level = headerTag.length;
+    execFormat('formatBlock', `<h${level}>`);
     setIsHeaderDropdownOpen(false);
   };
 
   const handleUndo = () => {
-    const textarea = document.getElementById('notepad-textarea');
-    if (textarea) {
-      textarea.focus();
-      document.execCommand('undo');
-    }
+    execFormat('undo');
   };
 
   const handleRedo = () => {
-    const textarea = document.getElementById('notepad-textarea');
-    if (textarea) {
-      textarea.focus();
-      document.execCommand('redo');
-    }
+    execFormat('redo');
   };
 
   const insertColorText = (colorHex: string) => {
-    if (colorHex) {
-      insertTextAtCursor(`<span style="color: ${colorHex}">`, '</span>');
-    } else {
-      insertTextAtCursor('', '');
-    }
+    execFormat('foreColor', colorHex || '#111827');
     setIsPenDropdownOpen(false);
   };
 
   const insertHighlightText = (colorHex: string) => {
-    if (colorHex) {
-      insertTextAtCursor(`<mark style="background-color: ${colorHex}">`, '</mark>');
-    } else {
-      insertTextAtCursor('', '');
-    }
+    execFormat('hiliteColor', colorHex || 'transparent');
     setIsHighlighterDropdownOpen(false);
   };
 
@@ -773,28 +779,28 @@ export function NotepadView() {
                 {/* Alignment */}
                 <div className="flex bg-surface2-light dark:bg-surface2-dark p-0.5 rounded-lg border border-border/30">
                   <button 
-                    onClick={() => setAlignment('right')}
+                    onClick={() => handleAlignmentChange('right')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
                     title="محاذاة لليمين"
                   >
                     <AlignRight className="w-3.5 h-3.5" />
                   </button>
                   <button 
-                    onClick={() => setAlignment('center')}
+                    onClick={() => handleAlignmentChange('center')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
                     title="محاذاة للوسط"
                   >
                     <AlignCenter className="w-3.5 h-3.5" />
                   </button>
                   <button 
-                    onClick={() => setAlignment('left')}
+                    onClick={() => handleAlignmentChange('left')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
                     title="محاذاة لليصار"
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
                   </button>
                   <button 
-                    onClick={() => setAlignment('justify')}
+                    onClick={() => handleAlignmentChange('justify')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
                     title="ضبط النص"
                   >
@@ -804,12 +810,12 @@ export function NotepadView() {
 
                 <div className="w-[1px] h-5 bg-border mx-1" />
 
-                {/* Markdown Helpers */}
-                <button onClick={() => insertTextAtCursor('**', '**')} title="عريض" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => insertTextAtCursor('*', '*')} title="مائل" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => insertTextAtCursor('- ')} title="قائمة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><List className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => insertTextAtCursor('`', '`')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Code className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => insertTextAtCursor('[رابط](', ')')} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
+                {/* Formatting Helpers */}
+                <button onClick={() => execFormat('bold')} title="عريض" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('italic')} title="مائل" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('insertUnorderedList')} title="قائمة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><List className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('formatBlock', '<pre>')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Code className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={insertLink} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
                 <button onClick={handleImageToolbarClick} title="صورة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Image className="w-3.5 h-3.5 opacity-60" /></button>
 
               </div>
@@ -857,17 +863,17 @@ export function NotepadView() {
               {/* Text Editor content */}
               {viewMode === 'edit' ? (
                 <div className="flex-1 flex flex-col min-h-[400px]">
-                  <textarea
-                    id="notepad-textarea"
-                    value={selectedPrompt.content}
-                    onChange={e => handleContentChange(e.target.value)}
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    onInput={handleEditorInput}
                     onPaste={handlePaste}
                     className={cn(
-                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50",
+                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[400px] text-right focus:outline-none overflow-y-auto",
                       fontFamily,
-                      fontSize,
-                      alignment === 'center' ? 'text-center' : alignment === 'left' ? 'text-left' : alignment === 'justify' ? 'text-justify' : 'text-right'
+                      fontSize
                     )}
+                    style={{ direction: 'rtl' }}
                     placeholder="اكتب البرومبت هنا..."
                   />
                   <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between">

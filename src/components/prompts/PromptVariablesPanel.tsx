@@ -26,10 +26,25 @@ export function PromptVariablesPanel({ content, variables, onCopy }: PromptVaria
   };
 
   const handleCopy = () => {
-    const final = getFinalContent();
-    navigator.clipboard.writeText(final);
+    const html = getFinalContent();
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+    try {
+      const blobHtml = new Blob([html], { type: 'text/html' });
+      const blobText = new Blob([plainText], { type: 'text/plain' });
+      const clipboardItem = new ClipboardItem({
+        'text/html': blobHtml,
+        'text/plain': blobText
+      });
+      navigator.clipboard.write([clipboardItem]);
+    } catch (err) {
+      navigator.clipboard.writeText(plainText);
+    }
+
     setCopied(true);
-    onCopy(final);
+    onCopy(html);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -55,9 +70,10 @@ export function PromptVariablesPanel({ content, variables, onCopy }: PromptVaria
         </div>
         
         <div className="pt-4 flex flex-col gap-3">
-          <div className="p-4 bg-white dark:bg-surface2-dark rounded-xl border border-border/40 text-xs font-mono whitespace-pre-wrap opacity-60 max-h-32 overflow-y-auto">
-            {getFinalContent()}
-          </div>
+          <div 
+            className="p-4 bg-white dark:bg-surface2-dark rounded-xl border border-border/40 text-xs font-mono whitespace-pre-wrap opacity-60 max-h-32 overflow-y-auto"
+            dangerouslySetInnerHTML={{ __html: getFinalContent() }}
+          />
           
           <Button onClick={handleCopy} className="w-full">
             {copied ? <Check className="w-4 h-4 ml-2" /> : <Copy className="w-4 h-4 ml-2" />}

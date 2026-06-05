@@ -7,81 +7,22 @@ import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity, Image } from 'lucide-react';
+import { 
+  Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, 
+  Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, 
+  AlignJustify, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity, 
+  Image, Undo, Redo, Palette, Highlighter, Heading
+} from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Prompt } from '../../types';
 import Markdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, addPrompt, updatePrompt } = useApp();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const insertTextAtCursor = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = formData.content;
-    
-    const selectedText = text.substring(start, end);
-    const replacement = before + selectedText + after;
-    
-    const newContent = text.substring(0, start) + replacement + text.substring(end);
-    setFormData(prev => ({ ...prev, content: newContent }));
-
-    // Reset selection focus
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + selectedText.length);
-    }, 50);
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.indexOf('image') !== -1) {
-        e.preventDefault();
-        const file = item.getAsFile();
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            if (event.target?.result) {
-              const base64Url = event.target.result as string;
-              insertTextAtCursor(`\n![image.png](${base64Url})\n`, '');
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      }
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          const base64Url = event.target.result as string;
-          insertTextAtCursor(`![${file.name}](${base64Url})`, '');
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-    e.target.value = '';
-  };
-
-  const handleImageToolbarClick = () => {
-    const input = document.getElementById('editor-image-uploader');
-    input?.click();
-  };
-  
+  const editorRef = useRef<HTMLDivElement>(null);
   const existingPrompt = id ? data.prompts.find(p => p.id === id) : null;
 
   const [formData, setFormData] = useState({
@@ -100,10 +41,130 @@ export function EditorPage() {
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [autoSavedTime, setAutoSavedTime] = useState<string>('منذ ثوان');
 
-  const variables = formData.content.match(/\{[^}]+\}/g)?.map(v => v.slice(1, -1)) || [];
+  // Font/Size/Alignment states
+  const [fontFamily, setFontFamily] = useState<string>('font-sans');
+  const [fontSize, setFontSize] = useState<string>('text-sm');
+  const [isHeaderDropdownOpen, setIsHeaderDropdownOpen] = useState(false);
+  const [isPenDropdownOpen, setIsPenDropdownOpen] = useState(false);
+  const [isHighlighterDropdownOpen, setIsHighlighterDropdownOpen] = useState(false);
+  const [alignment, setAlignment] = useState<'right' | 'center' | 'left' | 'justify'>('right');
+
+  // Sync contenteditable editor innerHTML when viewMode changes
+  useEffect(() => {
+    if (editorRef.current && viewMode === 'edit') {
+      if (editorRef.current.innerHTML !== formData.content) {
+        editorRef.current.innerHTML = formData.content;
+      }
+    }
+  }, [viewMode]);
+
+  const handleEditorInput = () => {
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      setFormData(prev => ({ ...prev, content: html }));
+    }
+  };
+
+  const execFormat = (command: string, value: string = '') => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    handleEditorInput();
+  };
+
+  const handleUndo = () => execFormat('undo');
+  const handleRedo = () => execFormat('redo');
+
+  const insertLink = () => {
+    const url = prompt('أدخل الرابط:');
+    if (url) {
+      execFormat('createLink', url);
+    }
+  };
+
+  const insertColorText = (colorHex: string) => {
+    execFormat('foreColor', colorHex || '#111827');
+    setIsPenDropdownOpen(false);
+  };
+
+  const insertHighlightText = (colorHex: string) => {
+    execFormat('hiliteColor', colorHex || 'transparent');
+    setIsHighlighterDropdownOpen(false);
+  };
+
+  const insertHeader = (headerTag: string) => {
+    const level = headerTag.length;
+    execFormat('formatBlock', `<h${level}>`);
+    setIsHeaderDropdownOpen(false);
+  };
+
+  const handleAlignmentChange = (alignType: 'right' | 'center' | 'left' | 'justify') => {
+    setAlignment(alignType);
+    if (alignType === 'right') execFormat('justifyRight');
+    else if (alignType === 'center') execFormat('justifyCenter');
+    else if (alignType === 'left') execFormat('justifyLeft');
+    else if (alignType === 'justify') execFormat('justifyFull');
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              const base64Url = event.target.result as string;
+              editorRef.current?.focus();
+              document.execCommand('insertImage', false, base64Url);
+              handleEditorInput();
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const base64Url = event.target.result as string;
+          editorRef.current?.focus();
+          document.execCommand('insertImage', false, base64Url);
+          handleEditorInput();
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  };
+
+  const handleImageToolbarClick = () => {
+    const input = document.getElementById('editor-image-uploader');
+    input?.click();
+  };
+
+  // Helper to extract plain text from HTML
+  const getTextFromHtml = (html: string) => {
+    if (typeof document === 'undefined') return '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  const plainTextContent = getTextFromHtml(formData.content);
+  const variables = plainTextContent.match(/\{[^}]+\}/g)?.map(v => v.slice(1, -1)) || [];
   const uniqueVariables = Array.from(new Set(variables));
 
-  const charCount = formData.content.length;
+  const charCount = plainTextContent.length;
   const tokenCount = Math.round(charCount / 0.7); // Approximate token ratio matching mocks
 
   const handleSave = () => {
@@ -142,22 +203,6 @@ export function EditorPage() {
     }, 10000);
     return () => clearInterval(timer);
   }, []);
-
-  const toolbarButtons = [
-    { icon: Bold, label: 'عريض', action: () => insertTextAtCursor('**', '**') },
-    { icon: Italic, label: 'مائل', action: () => insertTextAtCursor('*', '*') },
-    { icon: Underline, label: 'تسطير', action: () => insertTextAtCursor('<u>', '</u>') },
-    { icon: Strikethrough, label: 'يتوسطه خط', action: () => insertTextAtCursor('~~', '~~') },
-    { icon: AlignRight, label: 'محاذاة لليمين', action: () => insertTextAtCursor('<div align="right">\n', '\n</div>') },
-    { icon: AlignCenter, label: 'توسيط', action: () => insertTextAtCursor('<div align="center">\n', '\n</div>') },
-    { icon: AlignLeft, label: 'محاذاة لليسرى', action: () => insertTextAtCursor('<div align="left">\n', '\n</div>') },
-    { icon: List, label: 'قائمة نقطية', action: () => insertTextAtCursor('- ') },
-    { icon: ListOrdered, label: 'قائمة رقمية', action: () => insertTextAtCursor('1. ') },
-    { icon: Quote, label: 'اقتباس', action: () => insertTextAtCursor('> ') },
-    { icon: Code, label: 'كود برمجى', action: () => insertTextAtCursor('`', '`') },
-    { icon: LinkIcon, label: 'رابط', action: () => insertTextAtCursor('[رابط](', ')') },
-    { icon: Image, label: 'صورة', action: () => handleImageToolbarClick() }
-  ];
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -272,24 +317,242 @@ export function EditorPage() {
 
             {/* Rich formatting toolbar from Image 4 */}
             {viewMode === 'edit' && (
-              <div className="flex flex-wrap gap-1 p-2 bg-surface2-light dark:bg-surface2-dark/50 border-y border-border/40">
-                {toolbarButtons.map((btn, i) => (
+              <div className="flex flex-wrap gap-1 p-2 bg-surface2-light dark:bg-surface2-dark/50 border-y border-border/40 select-none">
+                {/* Image upload helper */}
+                <button 
+                  onClick={handleImageToolbarClick} 
+                  type="button"
+                  title="رفع صورة وإدراجها" 
+                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
+                >
+                  <Image className="w-4 h-4 opacity-70" />
+                </button>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Undo / Redo */}
+                <button 
+                  onClick={handleUndo} 
+                  type="button"
+                  title="تراجع" 
+                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
+                >
+                  <Undo className="w-4 h-4 opacity-70" />
+                </button>
+                <button 
+                  onClick={handleRedo} 
+                  type="button"
+                  title="إعادة" 
+                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
+                >
+                  <Redo className="w-4 h-4 opacity-70" />
+                </button>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Font Family selector */}
+                <select 
+                  value={fontFamily}
+                  onChange={e => setFontFamily(e.target.value)}
+                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                >
+                  <option value="font-sans">IBM Plex Sans (عادي)</option>
+                  <option value="font-mono">Monospace (كود)</option>
+                  <option value="font-serif">Serif (كلاسيك)</option>
+                </select>
+
+                {/* Font Size selector */}
+                <select 
+                  value={fontSize}
+                  onChange={e => setFontSize(e.target.value)}
+                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                >
+                  <option value="text-xs">12px</option>
+                  <option value="text-sm">14px</option>
+                  <option value="text-base">16px</option>
+                  <option value="text-lg">18px</option>
+                  <option value="text-xl">20px</option>
+                </select>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Text Color Picker (Pen) */}
+                <div className="relative">
                   <button 
-                    key={i} 
-                    type="button" 
-                    title={btn.label}
-                    onClick={btn.action}
-                    className="p-2 hover:bg-border/30 rounded-lg text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setIsPenDropdownOpen(!isPenDropdownOpen);
+                      setIsHighlighterDropdownOpen(false);
+                      setIsHeaderDropdownOpen(false);
+                    }}
+                    type="button"
+                    title="لون الخط" 
+                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
                   >
-                    <btn.icon className="w-3.5 h-3.5" />
+                    <Palette className="w-4 h-4 opacity-70 text-accent" />
                   </button>
-                ))}
+                  {isPenDropdownOpen && (
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                      {[
+                        { name: 'أحمر', hex: '#ef4444', class: 'bg-red-500' },
+                        { name: 'أخضر', hex: '#22c55e', class: 'bg-emerald-500' },
+                        { name: 'أزرق', hex: '#3b82f6', class: 'bg-blue-500' },
+                        { name: 'بنفسجي', hex: '#a855f7', class: 'bg-purple-500' },
+                        { name: 'برتقالي', hex: '#f97316', class: 'bg-orange-500' }
+                      ].map((color, idx) => (
+                        <button 
+                          key={idx}
+                          type="button"
+                          onClick={() => insertColorText(color.hex)}
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                        >
+                          <span className={cn("w-3 h-3 rounded-full shrink-0", color.class)} />
+                          <span>{color.name}</span>
+                        </button>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => insertColorText('')}
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                      >
+                        <span className="w-3 h-3 rounded-full shrink-0 bg-transparent border border-border" />
+                        <span>مسح التنسيق</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Highlighter Picker */}
+                <div className="relative">
+                  <button 
+                    onClick={() => {
+                      setIsHighlighterDropdownOpen(!isHighlighterDropdownOpen);
+                      setIsPenDropdownOpen(false);
+                      setIsHeaderDropdownOpen(false);
+                    }}
+                    type="button"
+                    title="تمييز النص" 
+                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                  >
+                    <Highlighter className="w-4 h-4 opacity-70 text-warning" />
+                  </button>
+                  {isHighlighterDropdownOpen && (
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                      {[
+                        { name: 'أصفر', hex: '#fef08a', class: 'bg-yellow-200 text-slate-800' },
+                        { name: 'ليموني', hex: '#bbf7d0', class: 'bg-emerald-200 text-slate-800' },
+                        { name: 'سماوي', hex: '#cffafe', class: 'bg-cyan-200 text-slate-800' },
+                        { name: 'وردي', hex: '#fbcfe8', class: 'bg-pink-200 text-slate-800' }
+                      ].map((color, idx) => (
+                        <button 
+                          key={idx}
+                          type="button"
+                          onClick={() => insertHighlightText(color.hex)}
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                        >
+                          <span className={cn("w-3 h-3 rounded shrink-0", color.class)} />
+                          <span>{color.name}</span>
+                        </button>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => insertHighlightText('')}
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                      >
+                        <span className="w-3 h-3 rounded shrink-0 bg-transparent border border-border" />
+                        <span>مسح التمييز</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Headers Dropdown */}
+                <div className="relative">
+                  <button 
+                    onClick={() => {
+                      setIsHeaderDropdownOpen(!isHeaderDropdownOpen);
+                      setIsPenDropdownOpen(false);
+                      setIsHighlighterDropdownOpen(false);
+                    }}
+                    type="button"
+                    className="h-8 px-2.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    <Heading className="w-3.5 h-3.5 text-accent" />
+                    <span>العناوين</span>
+                  </button>
+                  {isHeaderDropdownOpen && (
+                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-right">
+                      {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
+                        <button 
+                          key={idx}
+                          type="button"
+                          onClick={() => insertHeader(tag)}
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-right cursor-pointer text-slate-700 dark:text-slate-200"
+                        >
+                          عنوان H{idx + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Alignment */}
+                <div className="flex bg-surface2-light dark:bg-surface2-dark p-0.5 rounded-lg border border-border/30">
+                  <button 
+                    onClick={() => handleAlignmentChange('right')}
+                    type="button"
+                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                    title="محاذاة لليمين"
+                  >
+                    <AlignRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    onClick={() => handleAlignmentChange('center')}
+                    type="button"
+                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                    title="محاذاة للوسط"
+                  >
+                    <AlignCenter className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    onClick={() => handleAlignmentChange('left')}
+                    type="button"
+                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                    title="محاذاة لليصار"
+                  >
+                    <AlignLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button 
+                    onClick={() => handleAlignmentChange('justify')}
+                    type="button"
+                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                    title="ضبط النص"
+                  >
+                    <AlignJustify className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+
+                {/* Formatting Helpers */}
+                <button type="button" onClick={() => execFormat('bold')} title="عريض" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('italic')} title="مائل" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('underline')} title="تسطير" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Underline className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('strikeThrough')} title="يتوسطه خط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Strikethrough className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('insertUnorderedList')} title="قائمة نقطية" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('insertOrderedList')} title="قائمة رقمية" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><ListOrdered className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('formatBlock', '<blockquote>')} title="اقتباس" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Quote className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('formatBlock', '<pre>')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={insertLink} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
               </div>
             )}
 
             <CardContent className="p-0">
                {viewMode === 'edit' ? (
-                 <div className="relative">
+                 <div className="relative p-4">
                    <input
                      id="editor-image-uploader"
                      type="file"
@@ -297,21 +560,26 @@ export function EditorPage() {
                      className="hidden"
                      onChange={handleImageUpload}
                    />
-                   <Textarea
-                      ref={textareaRef}
+                   <div
+                      ref={editorRef}
+                      contentEditable
+                      onInput={handleEditorInput}
                       onPaste={handlePaste}
                       placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية."
-                      className="min-h-[350px] font-mono leading-relaxed border-none rounded-none focus:border-none shadow-none bg-transparent"
-                      value={formData.content}
-                      onChange={e => setFormData({ ...formData, content: e.target.value })}
+                      className={cn(
+                        "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full",
+                        fontFamily,
+                        fontSize
+                      )}
+                      style={{ direction: 'rtl' }}
                     />
-                    <div className="absolute bottom-3 left-4 text-[9px] font-bold opacity-45">
+                    <div className="absolute bottom-3 left-6 text-[9px] font-bold opacity-45">
                       عدد الأحرف: {charCount}
                     </div>
                  </div>
                ) : (
                  <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">
-                    <Markdown>{formData.content || '_لا يوجد محتوى للمعاينة..._'}</Markdown>
+                    <Markdown rehypePlugins={[rehypeRaw]}>{formData.content || '_لا يوجد محتوى للمعاينة..._'}</Markdown>
                  </div>
                )}
             </CardContent>
