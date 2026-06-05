@@ -1085,7 +1085,7 @@ ${textToImprove}`;
                       fontSize
                     )}
                     style={{ direction: 'rtl' }}
-                    placeholder="اكتب البرومبت هنا..."
+                    {...{ placeholder: "اكتب البرومبت هنا..." }}
                   />
                   <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between flex-wrap gap-2 select-none">
                     <div className="flex items-center gap-3 flex-wrap">

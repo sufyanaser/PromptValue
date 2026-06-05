@@ -473,11 +473,7 @@ ${textToImprove}`;
                            </span>
                          </button>
                        )}
-                              تحسين صياغة البرومبت عبر Claude
-                            </span>
-                          </button>
-                        )}
->>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
+
                      </div>
                    )}
                  </div>
@@ -736,7 +732,7 @@ ${textToImprove}`;
                       contentEditable
                       onInput={handleEditorInput}
                       onPaste={handlePaste}
-                      placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية."
+                      {...{ placeholder: "اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية." }}
                       className={cn(
                         "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full transition-all duration-500",
                         fontFamily,

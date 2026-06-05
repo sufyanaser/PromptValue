@@ -398,7 +398,7 @@ export function SettingsPage() {
                               onChange={e => updateData({ settings: { ...data.settings, googleDriveApiKey: e.target.value } })}
                             />
                             <Button 
-                              size="xs" 
+                              size="sm" 
                               variant="ghost" 
                               type="button"
                               onClick={() => testApiKey('Google Drive Sync', data.settings.googleDriveApiKey)}
@@ -441,7 +441,7 @@ export function SettingsPage() {
                               onChange={e => updateData({ settings: { ...data.settings, dropboxApiKey: e.target.value } })}
                             />
                             <Button 
-                              size="xs" 
+                              size="sm" 
                               variant="ghost" 
                               type="button"
                               onClick={() => testApiKey('Dropbox Sync', data.settings.dropboxApiKey)}
