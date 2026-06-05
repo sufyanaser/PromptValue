@@ -14,7 +14,7 @@ export function Select({ label, options, className, ...props }: SelectProps) {
       <div className="relative">
         <select
           className={cn(
-            "h-11 w-full flex items-center justify-between px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm font-medium outline-none appearance-none focus:border-accent transition-all",
+            "h-11 w-full flex items-center justify-between px-4 rounded-xl border border-border/40 bg-white dark:bg-surface2-dark text-sm font-medium outline-none appearance-none focus:border-accent transition-all",
             className
           )}
           {...props}

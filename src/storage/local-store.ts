@@ -2,100 +2,177 @@ import { AppData, Prompt, Category, Tag, Activity, Settings, Backup, PromptVersi
 
 const STORAGE_KEY = 'promptvault_data';
 
-// Simple obfuscation for "shuffled/encrypted" storage request
-const b64Encode = (str: string) => {
-  try {
-    return btoa(unescape(encodeURIComponent(str)));
-  } catch (e) {
-    return str;
-  }
-};
-
-const b64Decode = (str: string) => {
-  try {
-    return decodeURIComponent(escape(atob(str)));
-  } catch (e) {
-    return str;
-  }
-};
-
-const obscureKeys = (settings: Settings): Settings => {
-  const result = { ...settings };
-  const keysToObscure: (keyof Settings)[] = ['geminiApiKey', 'openaiApiKey', 'claudeApiKey', 'copilotApiKey', 'googleDriveApiKey', 'dropboxApiKey'];
-  
-  keysToObscure.forEach(key => {
-    const val = result[key];
-    if (val && typeof val === 'string') {
-      (result as any)[key] = `_v2_${b64Encode(val)}`;
-    }
-  });
-  
-  return result;
-};
-
-const deobscureKeys = (settings: Settings): Settings => {
-  const result = { ...settings };
-  const keysToObscure: (keyof Settings)[] = ['geminiApiKey', 'openaiApiKey', 'claudeApiKey', 'copilotApiKey', 'googleDriveApiKey', 'dropboxApiKey'];
-  
-  keysToObscure.forEach(key => {
-    const val = result[key];
-    if (val && typeof val === 'string' && val.startsWith('_v2_')) {
-      (result as any)[key] = b64Decode(val.substring(4));
-    }
-  });
-  
-  return result;
-};
-
 export const INITIAL_DATA: AppData = {
   prompts: [
     {
       id: '1',
-      title: 'خبير برمجة في بايثون',
-      description: 'برومبت مخصص للمساعدة في كتابة كود بايثون نظيف ومعياري.',
-      content: 'تصرف كمبرمج بايثون خبير. يرجى تحليل الكود التالي واقتراح تحسينات...',
+      title: 'تحليل بيانات المبيعات الشهري',
+      description: 'برومبت مخصص لتحليل بيانات المبيعات الشهرية واستخلاص الرؤى والاتجاهات.',
+      content: 'أنت خبير تحليل بيانات الأعمال. قم بتحليل بيانات المبيعات الشهرية التالية واستخلص منها أهم الاتجاهات والفرص والتحديات:\n\n{data}',
       categoryId: '1',
-      tags: ['البرمجة', 'بايثون', 'تحسين'],
-      variables: ['code'],
+      tags: ['مبيعات', 'تقارير', 'تحليل البيانات'],
+      variables: ['data'],
       status: 'active',
       isFavorite: true,
-      usageCount: 12,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      version: 1,
+      usageCount: 124,
+      author: 'أحمد النعيمي',
+      source: 'مكتبة الفريق',
+      version: 2,
+      createdAt: '2025-05-20T14:30:00Z',
+      updatedAt: '2025-05-20T14:30:00Z',
     },
     {
       id: '2',
-      title: 'محلل محتوى تسويقي',
-      description: 'تحسين المحتوى التسويقي لمنصات التواصل الاجتماعي.',
-      content: 'كخبير تسويق رقمي، قم بتقييم هذا المنشور من حيث التفاعل والوضوح...',
+      title: 'بناء خطة محتوى لأسبوع كامل',
+      description: 'إنشاء خطة محتوى تفصيلية لمدة 7 أيام مخصصة لمنصة تواصل اجتماعي معينة.',
+      content: 'أنت مساعد خبير في استراتيجيات المحتوى الرقمي.\nقم بإنشاء خطة محتوى تفصيلية لمدة 7 أيام لحساب على منصة {platform} عن موضوع: {topic}.\nالجمهور المستهدف: {audience}\nالهدف من الخطة: {goal}.\nيرجى كتابة أفكار المنشورات، نوع المحتوى، واقتراح الهاشتاغات.',
       categoryId: '2',
-      tags: ['تسويق', 'محتوى'],
-      variables: ['content', 'platform'],
+      tags: ['تخطيط', 'محتوى', 'تسويق', 'أسبوعي'],
+      variables: ['topic', 'platform', 'audience', 'goal'],
+      status: 'active',
+      isFavorite: true,
+      usageCount: 98,
+      author: 'أحمد النعيمي',
+      source: 'مكتبة الفريق',
+      version: 1,
+      createdAt: '2025-05-19T11:05:00Z',
+      updatedAt: '2025-05-19T11:05:00Z',
+    },
+    {
+      id: '3',
+      title: 'كتابة وصف منتج احترافي',
+      description: 'كتابة وصف تسويقي وجذاب لمنتج يبرز الفوائد والميزات.',
+      content: 'تصرف ككاتب إعلانات محترف. اكتب وصفاً تسويقياً جذاباً للمنتج التالي: {product_name}.\nالميزات الأساسية:\n{features}\n\nاجعل الوصف يركز على الفوائد التي يحصل عليها العميل ونبرة الصوت تكون ودية ومقنعة.',
+      categoryId: '3',
+      tags: ['كتابة', 'تسويق', 'احترافي'],
+      variables: ['product_name', 'features'],
+      status: 'active',
+      isFavorite: true,
+      usageCount: 76,
+      author: 'سفيان طه',
+      source: 'مكتبة الفريق',
+      version: 1,
+      createdAt: '2025-05-19T09:30:00Z',
+      updatedAt: '2025-05-19T09:30:00Z',
+    },
+    {
+      id: '4',
+      title: 'إنشاء أسئلة مقابلة وظيفية',
+      description: 'توليد أسئلة مقابلة وظيفية مخصصة بناءً على الوصف الوظيفي.',
+      content: 'أنت مسؤول موارد بشرية محترف. بناءً على الدور الوظيفي التالي: {role} والوصف الوظيفي: {description}، قم بتوليد 10 أسئلة مقابلة وظيفية لتقييم الكفاءة الفنية والمهارات الشخصية للمرشح.',
+      categoryId: '4',
+      tags: ['توظيف', 'موارد بشرية', 'أسئلة'],
+      variables: ['role', 'description'],
       status: 'active',
       isFavorite: false,
-      usageCount: 5,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      usageCount: 62,
+      author: 'أحمد النعيمي',
+      source: 'مكتبة الفريق',
       version: 1,
+      createdAt: '2025-05-18T16:20:00Z',
+      updatedAt: '2025-05-18T16:20:00Z',
+    },
+    {
+      id: '5',
+      title: 'تلخيص تقرير علمي',
+      description: 'تلخيص الأبحاث والتقارير المعقدة إلى نقاط أساسية سهلة القراءة.',
+      content: 'أنت مساعد بحث علمي. قم بتلخيص التقرير العلمي التالي في نقاط واضحة ومكثفة:\n\n{report_text}\n\nركز على المنهجية، النتائج الرئيسية، والتوصيات المقترحة.',
+      categoryId: '5',
+      tags: ['بحث', 'تلخيص', 'علمي'],
+      variables: ['report_text'],
+      status: 'active',
+      isFavorite: false,
+      usageCount: 48,
+      author: 'سفيان طه',
+      source: 'مكتبة الفريق',
+      version: 1,
+      createdAt: '2025-05-18T14:15:00Z',
+      updatedAt: '2025-05-18T14:15:00Z',
+    },
+    {
+      id: '6',
+      title: 'تحليل بيئات العمل (SWOT)',
+      description: 'قم بتحليل بيئة عمل أو مشروع باستخدام إطار SWOT لتحديد نقاط القوة والضعف والفرص والتهديدات، مع تقديم توصيات عملية.',
+      content: 'أنت محلل محتوى خبير في التسويق الرقمي وإنشاء المحتوى.\nقم بتحليل الموضوع أو الفكرة التالية بشكل شامل، ثم أنشئ محتوى احترافياً جاهزاً للنشر بناءً على التحليل.\n\nالموضوع: {topic}\nالجمهور المستهدف: {audience}\nالهدف من المحتوى: {goal}\nالمنصة: {platform}\nالنبرة المطلوبة: {tone}\n\nيرجى اتباع الهيكل التالي في الاستجابة:\n1. ملخص التحليل (3 نقاط رئيسية)\n2. أفكار رئيسية للمحتوى (5 أفكار)\n3. مخطط المحتوى (عناوين فرعية مقترحة)\n4. النص الكامل للمحتوى جاهز للنشر\n5. اقتراحات تحسين ومحفزات تفاعل\n\nاكتب المحتوى باللغة العربية بأسلوب واضح وجذاب ومتوافق مع أفضل ممارسات السيو.',
+      categoryId: '1',
+      tags: ['SWOT', 'تحليل', 'استراتيجية'],
+      variables: ['topic', 'audience', 'goal', 'platform', 'tone'],
+      status: 'active',
+      isFavorite: true,
+      usageCount: 248,
+      author: 'أحمد النعيمي',
+      source: 'مكتبة الفريق',
+      version: 3,
+      createdAt: '2025-05-10T10:15:00Z',
+      updatedAt: '2025-05-20T14:15:00Z',
+    },
+    {
+      id: '7',
+      title: 'كتابة بريد إلكتروني احترافي',
+      description: 'كتابة رسائل بريد إلكتروني رسمية ومقنعة للعملاء أو الشركاء.',
+      content: 'اكتب بريداً إلكترونياً احترافياً ومقنعاً إلى {recipient}.\nالهدف من الرسالة: {purpose}.\nالنقاط التي يجب تغطيتها:\n{points}\n\nاجعل نبرة البريد رسمية، واضحة، وتدعو إلى اتخاذ إجراء محدد.',
+      categoryId: '3',
+      tags: ['كتابة', 'اتصال', 'احترافي'],
+      variables: ['recipient', 'purpose', 'points'],
+      status: 'active',
+      isFavorite: false,
+      usageCount: 132,
+      author: 'أحمد النعيمي',
+      source: 'مكتبة الفريق',
+      version: 1,
+      createdAt: '2025-05-18T08:45:00Z',
+      updatedAt: '2025-05-18T08:45:00Z',
+    },
+    {
+      id: '8',
+      title: 'شرح كود برمجي',
+      description: 'شرح الأكواد البرمجية المعقدة خطوة بخطوة مع اقتراح تحسينات.',
+      content: 'أنت معلم برمجة خبير. يرجى شرح الكود التالي المكتوب بلغة {language} خطوة بخطوة بطريقة مبسطة:\n\n{code}\n\nاقترح أيضاً أي تحسينات ممكنة على الكود من حيث الأداء أو سهولة القراءة.',
+      categoryId: '4',
+      tags: ['برمجة', 'شرح', 'كود'],
+      variables: ['language', 'code'],
+      status: 'active',
+      isFavorite: false,
+      usageCount: 109,
+      author: 'سفيان طه',
+      source: 'المكتبة العامة',
+      version: 1,
+      createdAt: '2025-05-18T04:20:00Z',
+      updatedAt: '2025-05-18T04:20:00Z',
     }
   ],
   categories: [
-    { id: '1', name: 'برمجة', description: 'كل ما يخص تطوير البرمجيات', color: '#3B82F6', promptCount: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: '2', name: 'تسويق', description: 'برومبتات التسويق والمبيعات', color: '#F59E0B', promptCount: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: '3', name: 'تصميم', description: 'مساعد التصميم المرئي', color: '#EF4444', promptCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    { id: '1', name: 'تحليل الأعمال', description: 'كل ما يخص تحليل بيئات العمل ودراسة الجدوى والبيانات والـ SWOT.', color: '#3B82F6', promptCount: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: '2', name: 'التسويق', description: 'برومبتات التخطيط التسويقي وبناء خطط المحتوى لمنصات التواصل.', color: '#F59E0B', promptCount: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: '3', name: 'الكتابة', description: 'مساعد كتابة الإعلانات والرسائل الاحترافية والأوصاف التسويقية.', color: '#EF4444', promptCount: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: '4', name: 'البرمجة', description: 'كتابة وشرح وتحسين الأكواد البرمجية وتطوير النظم.', color: '#10B981', promptCount: 2, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: '5', name: 'البحث', description: 'تلخيص التقارير العلمية ومراجعة الأبحاث الأكاديمية وصياغتها.', color: '#EC4899', promptCount: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
   ],
   tags: [
-    { id: '1', name: 'بايثون', color: '#3776AB', usageCount: 1 },
-    { id: '2', name: 'محتوى', color: '#FF4500', usageCount: 1 }
+    { id: '1', name: 'تحليل', color: '#3B82F6', usageCount: 2 },
+    { id: '2', name: 'تسويق', color: '#F59E0B', usageCount: 2 },
+    { id: '3', name: 'كتابة', color: '#EF4444', usageCount: 2 },
+    { id: '4', name: 'برمجة', color: '#10B981', usageCount: 2 },
+    { id: '5', name: 'SWOT', color: '#8B5CF6', usageCount: 1 }
   ],
-  activities: [],
-  backups: [],
-  versions: [],
+  activities: [
+    { id: 'act1', type: 'edit', label: 'تم تعديل برومبت: "تحليل بيانات المبيعات الشهري"', promptId: '1', createdAt: new Date().toISOString() },
+    { id: 'act2', type: 'create', label: 'تم إنشاء برومبت: "بناء خطة محتوى لأسبوع كامل"', promptId: '2', createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+    { id: 'act3', type: 'edit', label: 'تم حذف برومبت: "تحليل SWOT للمشروع"', promptId: '6', createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString() },
+    { id: 'act4', type: 'create', label: 'تم استيراد 12 برومبت من ملف prompts_may_2025.json', promptId: '', createdAt: new Date(Date.now() - 1000 * 60 * 300).toISOString() }
+  ],
+  backups: [
+    { id: 'bak1', type: 'manual', size: '256.8 MB', status: 'success', createdAt: new Date(Date.now() - 1000 * 60 * 360).toISOString(), path: '{}' }
+  ],
+  versions: [
+    { id: 'v1', promptId: '6', version: 3, content: '...', changeNote: 'تحسين تعليمات الهيكل وإضافة قسم اقتراحات التحسين', createdAt: '2025-05-20T14:15:00Z' },
+    { id: 'v2', promptId: '6', version: 2, content: '...', changeNote: 'توسيع قائمة الأفكار الرئيسية وإضافة نبرة الصوت', createdAt: '2025-05-18T11:40:00Z' },
+    { id: 'v3', promptId: '6', version: 1, content: '...', changeNote: 'الإصدار الأول والأساسي للبرومبت', createdAt: '2025-05-15T09:30:00Z' }
+  ],
   settings: {
     theme: 'light',
     language: 'ar',
-    defaultView: 'card',
+    defaultView: 'list',
     autosaveEnabled: true,
     autosaveInterval: 5,
     databasePath: './database',
@@ -103,25 +180,17 @@ export const INITIAL_DATA: AppData = {
     backupFrequency: 'daily',
     backupRetention: 5,
     showPromptPreview: true,
-    showTooltips: true
+    showTooltips: true,
+    geminiApiKey: 'AQ.Ab8RN6LQKFhL3sxxjert2VwH_uDqPt0E7jhu33xkK-FrTnLYxg'
   }
 };
 
 export const localStore = {
   load: (): AppData => {
     const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return INITIAL_DATA;
-    const parsed = JSON.parse(data);
-    if (parsed.settings) {
-      parsed.settings = deobscureKeys(parsed.settings);
-    }
-    return parsed;
+    return data ? JSON.parse(data) : INITIAL_DATA;
   },
   save: (data: AppData) => {
-    const toSave = { ...data };
-    if (toSave.settings) {
-      toSave.settings = obscureKeys(toSave.settings);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 };

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeTheme, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -33,6 +33,20 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
+  // Temporarily hide native menu bar (File, Edit, View, Window)
+  Menu.setApplicationMenu(null);
+
+  // To restore the menus later, uncomment the following block and comment Menu.setApplicationMenu(null):
+  /*
+  const defaultMenu = Menu.buildFromTemplate([
+    { label: 'File', submenu: [{ role: 'quit' }] },
+    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }] },
+    { label: 'View', submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }] },
+    { label: 'Window', submenu: [{ role: 'minimize' }, { role: 'close' }] }
+  ]);
+  Menu.setApplicationMenu(defaultMenu);
+  */
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -44,6 +58,15 @@ app.on('window-all-closed', () => {
 
 // IPC Implementation for Storage & File Dialogs (Backend for v1)
 ipcMain.handle('app:version', () => app.getVersion());
+
+ipcMain.handle('theme:set', async (event, theme) => {
+  nativeTheme.themeSource = theme;
+  const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (win) {
+    win.setBackgroundColor(theme === 'dark' ? '#070B14' : '#F8FAFC');
+  }
+  return true;
+});
 
 ipcMain.handle('storage:save', async (event, data) => {
   const userDataPath = app.getPath('userData');

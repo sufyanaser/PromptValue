@@ -38,7 +38,7 @@ export function SettingsPage() {
                 onClick={() => setActiveTab(tab.name)}
                 className={cn(
                   "w-full text-right px-6 py-4 rounded-xl text-sm font-black transition-all flex items-center gap-3",
-                  activeTab === tab.name ? "bg-background-light dark:bg-surface-dark shadow-sm text-accent" : "opacity-50 hover:bg-white/50 dark:hover:bg-white/5"
+                  activeTab === tab.name ? "bg-white dark:bg-surface-dark shadow-sm text-accent" : "opacity-50 hover:bg-white/50 dark:hover:bg-white/5"
                 )}
               >
                 <tab.icon className={cn("w-4 h-4", activeTab === tab.name ? "text-accent" : "opacity-40")} />
@@ -66,13 +66,13 @@ export function SettingsPage() {
                       <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40">
                         <button
                           onClick={() => setTheme('light')}
-                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all", theme === 'light' ? "bg-background-light shadow text-accent" : "opacity-40")}
+                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all", theme === 'light' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
                         >
                           فاتح
                         </button>
                         <button
                           onClick={() => setTheme('dark')}
-                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all", theme === 'dark' ? "bg-surface-dark shadow text-accent" : "opacity-40")}
+                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all", theme === 'dark' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
                         >
                           داكن
                         </button>
@@ -96,7 +96,7 @@ export function SettingsPage() {
                           )}
                       >
                           <div className={cn(
-                              "absolute top-1 w-4 h-4 rounded-full bg-background-light dark:bg-text-dark transition-all shadow-sm",
+                              "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
                               data.settings.autosaveEnabled ? "left-1" : "left-7"
                           )} />
                       </button>
@@ -158,13 +158,6 @@ export function SettingsPage() {
                     placeholder="أدخل مفتاح Anthropic API هنا..."
                     value={data.settings.claudeApiKey || ''}
                     onChange={e => updateData({ settings: { ...data.settings, claudeApiKey: e.target.value } })}
-                  />
-                  <Input 
-                    label="Microsoft Copilot API Key"
-                    type="password"
-                    placeholder="أدخل مفتاح Copilot API هنا..."
-                    value={data.settings.copilotApiKey || ''}
-                    onChange={e => updateData({ settings: { ...data.settings, copilotApiKey: e.target.value } })}
                   />
                   <p className="text-[10px] opacity-50 font-bold pr-1">يتم تخزين المفاتيح محلياً على جهازك فقط ولا يتم مشاركتها مع أي طرف ثالث.</p>
                 </CardContent>

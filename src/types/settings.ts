@@ -6,7 +6,7 @@
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
   language: 'ar' | 'en';
-  defaultView: 'card' | 'list' | 'compact';
+  defaultView: 'card' | 'list' | 'compact' | 'notepad' | 'detailed';
   autosaveEnabled: boolean;
   autosaveInterval: number; // minutes
   databasePath: string;
@@ -18,7 +18,6 @@ export interface Settings {
   geminiApiKey?: string;
   openaiApiKey?: string;
   claudeApiKey?: string;
-  copilotApiKey?: string;
   googleDriveEnabled?: boolean;
   googleDriveApiKey?: string;
   dropboxEnabled?: boolean;
