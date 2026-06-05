@@ -11,7 +11,7 @@ import {
   Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, 
   Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, 
   AlignJustify, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity, 
-  Image, Undo, Redo, Palette, Highlighter, Heading
+  Image, Undo, Redo, Palette, Highlighter, Heading, Cpu, Brain, RefreshCw
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Prompt } from '../../types';
@@ -21,9 +21,97 @@ import rehypeRaw from 'rehype-raw';
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, addPrompt, updatePrompt } = useApp();
+  const { data, addPrompt, updatePrompt, showToast } = useApp();
+  const [aiEnhancing, setAiEnhancing] = useState(false);
+  const [aiEnhancingProvider, setAiEnhancingProvider] = useState<string | null>(null);
+
+  const isGeminiActive = !!data.settings.geminiApiKey?.trim();
+  const isOpenAIActive = !!data.settings.openaiApiKey?.trim();
+  const isClaudeActive = !!data.settings.claudeApiKey?.trim();
+  const hasAnyAi = isGeminiActive || isOpenAIActive || isClaudeActive;
+
   const editorRef = useRef<HTMLDivElement>(null);
   const existingPrompt = id ? data.prompts.find(p => p.id === id) : null;
+
+  const simulateTyping = (text: string) => {
+    let index = 0;
+    const step = Math.max(1, Math.ceil(text.length / 100)); // Dynamic step for smooth and snappy animation
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        const nextContent = text.slice(0, index + step);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = nextContent;
+        }
+        setFormData(prev => ({ ...prev, content: nextContent }));
+        index += step;
+      } else {
+        clearInterval(interval);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = text;
+        }
+        setFormData(prev => ({ ...prev, content: text }));
+        showToast('تم تحسين البرومبت بنجاح!', 'success');
+      }
+    }, 20);
+  };
+
+  const handleAiEnhance = async (provider: 'gemini' | 'openai' | 'claude') => {
+    const textToImprove = getTextFromHtml(formData.content);
+    if (!textToImprove.trim()) {
+      showToast('يرجى كتابة نص البرومبت أولاً ليتمكن المساعد من تحسينه.', 'warning');
+      return;
+    }
+
+    setAiEnhancing(true);
+    setAiEnhancingProvider(provider);
+
+    const apiKey = 
+      provider === 'gemini' 
+        ? data.settings.geminiApiKey 
+        : provider === 'openai' 
+        ? data.settings.openaiApiKey 
+        : data.settings.claudeApiKey;
+
+    const input = `أنت خبير هندسة برومبتات (Prompt Engineer) محترف ومتخصص في كتابة التعليمات البرمجية للذكاء الاصطناعي.
+مهمتك هي إعادة صياغة وتحسين وتوسيع البرومبت التالي ليعطي أفضل وأدق النتائج الممكنة.
+- ركّز على الوضوح والدقة والترتيب الهيكلي.
+- حافظ على المتغيرات المكتوبة بين القوسين المجعدين مثل {variable} كما هي تماماً ولا تغير أسمائها أو تحذفها.
+- أرجع فقط نص البرومبت المحسن النهائي مباشرة بدون أي مقدمات أو مؤخرات أو شروحات إضافية.
+
+البرومبت المراد تحسينه:
+${textToImprove}`;
+
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: input,
+          provider,
+          apiKey
+        }),
+      });
+
+      const resData = await response.json();
+      if (resData.error) throw new Error(resData.error);
+      
+      const enhancedText = resData.text;
+      if (enhancedText) {
+        simulateTyping(enhancedText);
+      } else {
+        throw new Error('لم يتم إرجاع أي نص');
+      }
+    } catch (error: any) {
+      console.error(error);
+      showToast(`فشل التحسين: ${error.message || 'حدث خطأ غير معروف'}`, 'danger');
+    } finally {
+      setAiEnhancing(false);
+      setAiEnhancingProvider(null);
+    }
+  };
 
   const [formData, setFormData] = useState({
     title: existingPrompt?.title || '',
@@ -553,6 +641,48 @@ export function EditorPage() {
             <CardContent className="p-0">
                {viewMode === 'edit' ? (
                  <div className="relative p-4">
+                   {/* Floating AI Enhancer Buttons */}
+                   {hasAnyAi && (
+                     <div className="absolute top-8 left-8 flex items-center gap-1.5 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-border/40 rounded-xl shadow-lg z-30 opacity-70 hover:opacity-100 transition-all select-none">
+                        <div className="text-[9px] font-black px-2 text-muted-light dark:text-muted-dark border-l border-border/30">
+                          محسّن الذكاء الاصطناعي
+                        </div>
+                        {isGeminiActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleAiEnhance('gemini')}
+                            disabled={aiEnhancing}
+                            className="p-1.5 hover:bg-info/10 hover:text-info text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                          >
+                            <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin text-info")} />
+                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر Gemini</span>
+                          </button>
+                        )}
+                        {isOpenAIActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleAiEnhance('openai')}
+                            disabled={aiEnhancing}
+                            className="p-1.5 hover:bg-success/10 hover:text-success text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                          >
+                            <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin text-success")} />
+                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر OpenAI</span>
+                          </button>
+                        )}
+                        {isClaudeActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleAiEnhance('claude')}
+                            disabled={aiEnhancing}
+                            className="p-1.5 hover:bg-accent/10 hover:text-accent text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                          >
+                            <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin text-accent")} />
+                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر Claude</span>
+                          </button>
+                        )}
+                     </div>
+                   )}
+
                    <input
                      id="editor-image-uploader"
                      type="file"
@@ -567,15 +697,26 @@ export function EditorPage() {
                       onPaste={handlePaste}
                       placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية."
                       className={cn(
-                        "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full",
+                        "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full transition-all duration-500",
                         fontFamily,
-                        fontSize
+                        fontSize,
+                        aiEnhancing && "border-accent/40 bg-accent/[0.01] animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.05)]"
                       )}
                       style={{ direction: 'rtl' }}
                     />
                     <div className="absolute bottom-3 left-6 text-[9px] font-bold opacity-45">
                       عدد الأحرف: {charCount}
                     </div>
+
+                    {/* AI Loading/Generating Overlay */}
+                    {aiEnhancing && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-surface-dark/40 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
+                        <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border border-border/50 shadow-xl">
+                          <RefreshCw className="w-4 h-4 text-accent animate-spin" />
+                          <span className="text-xs font-black">جاري تحسين البرومبت بالذكاء الاصطناعي...</span>
+                        </div>
+                      </div>
+                    )}
                  </div>
                ) : (
                  <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">
