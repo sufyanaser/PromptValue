@@ -79,6 +79,16 @@ export function NotepadView() {
   const [activeFolderId, setActiveFolderId] = useState<string>('gemini');
   const editorRef = useRef<HTMLDivElement>(null);
 
+  // Sidebar Collapsed State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('notepad_sidebar_collapsed') === 'true';
+  });
+
+  // Sync collapsed state to localStorage
+  useEffect(() => {
+    localStorage.setItem('notepad_sidebar_collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
   // Sync contenteditable editor innerHTML when active prompt changes
   useEffect(() => {
     if (editorRef.current && selectedPrompt) {
@@ -520,7 +530,10 @@ ${textToImprove}`;
     <div className="flex h-full w-full overflow-hidden bg-background-light dark:bg-background-dark select-none">
       
       {/* Left Column: Folders Sidebar */}
-      <div className="w-[280px] h-full flex flex-col border-l border-border/40 bg-surface-light dark:bg-surface-dark transition-colors duration-200">
+      <div className={cn(
+        "h-full flex flex-col border-l border-border/40 bg-surface-light dark:bg-surface-dark transition-all duration-300 shrink-0",
+        isSidebarCollapsed ? "w-0 border-l-0 overflow-hidden" : "w-[280px]"
+      )}>
         <div className="p-4 border-b border-border/40 flex items-center justify-between gap-2 shrink-0">
           <span className="text-[10px] font-black opacity-60 truncate">مجلدات المفكرة</span>
           <div className="flex gap-1">
@@ -669,7 +682,20 @@ ${textToImprove}`;
       </div>
 
       {/* Right Column: Notepad Editor Area */}
-      <div className="flex-1 h-full flex flex-col bg-slate-50/30 dark:bg-surface2-dark/10">
+      <div className="flex-1 h-full flex flex-col bg-slate-50/30 dark:bg-surface2-dark/10 relative">
+        {/* Sidebar Collapse/Expand Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-6.5 h-6.5 bg-white dark:bg-surface-dark border border-border/30 hover:border-accent/40 rounded-full flex items-center justify-center shadow-md z-40 cursor-pointer text-slate-500 hover:text-accent transition-all duration-300 hover:scale-110"
+          title={isSidebarCollapsed ? "عرض المجلدات" : "إخفاء المجلدات"}
+        >
+          {isSidebarCollapsed ? (
+            <ChevronLeft className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5" />
+          )}
+        </button>
         {selectedPrompt ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             
@@ -726,10 +752,10 @@ ${textToImprove}`;
             </div>
 
             {/* Rich Editor Toolbar matching mockup */}
-            <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex items-center justify-between gap-4 select-none shrink-0 shadow-sm z-10">
+            <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 select-none shrink-0 shadow-sm z-10">
               
               {/* Left format/style helpers */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 
                 {/* Mock Image Icon */}
                 <button 
@@ -934,102 +960,28 @@ ${textToImprove}`;
 
               </div>
 
-              {/* Right View Switcher & AI Enhancer Wrapper */}
-              <div className="flex flex-col items-end gap-1.5 shrink-0 select-none">
-                {/* Right View Switcher: Edit / Preview */}
-                <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
-                  <button
-                    onClick={() => setViewMode('edit')}
-                    className={cn(
-                      "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
-                      viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
-                    )}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    تحرير
-                  </button>
-                  <button
-                    onClick={() => setViewMode('preview')}
-                    className={cn(
-                      "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
-                      viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
-                    )}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    معاينة
-                  </button>
-                </div>
-                {/* AI Enhancer Buttons - Positioned cleanly under the switcher */}
-                {viewMode === 'edit' && hasAnyAi && (
-                  <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-surface2-dark/60 border border-border/20 rounded-xl select-none transition-all duration-300">
-                    {isGeminiActive && (
-                      <button
-                        type="button"
-                        onClick={() => handleAiEnhance('gemini')}
-                        disabled={aiEnhancing}
-                        className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                          aiEnhancingProvider === 'gemini'
-                            ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
-                            : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
-                        )}
-                        title="تحسين صياغة البرومبت عبر Gemini"
-                      >
-                        <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin")} />
-                        <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                          <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                        </span>
-                        <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                          Gemini جاهز ومفعّل
-                        </span>
-                      </button>
-                    )}
-                    {isOpenAIActive && (
-                      <button
-                        type="button"
-                        onClick={() => handleAiEnhance('openai')}
-                        disabled={aiEnhancing}
-                        className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                          aiEnhancingProvider === 'openai'
-                            ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
-                            : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
-                        )}
-                        title="تحسين صياغة البرومبت عبر OpenAI"
-                      >
-                        <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin")} />
-                        <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                          <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                        </span>
-                        <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                          OpenAI جاهز ومفعّل
-                        </span>
-                      </button>
-                    )}
-                    {isClaudeActive && (
-                      <button
-                        type="button"
-                        onClick={() => handleAiEnhance('claude')}
-                        disabled={aiEnhancing}
-                        className={cn(
-                          "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                          aiEnhancingProvider === 'claude'
-                            ? "bg-orange-500 text-white border-orange-600 shadow-sm"
-                            : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
-                        )}
-                        title="تحسين صياغة البرومبت عبر Claude"
-                      >
-                        <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin")} />
-                        <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                          <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                        </span>
-                        <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                          Claude جاهز ومفعّل
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                )}
+              {/* Right View Switcher: Edit / Preview */}
+              <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none shrink-0">
+                <button
+                  onClick={() => setViewMode('edit')}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
+                    viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
+                  )}
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  تحرير
+                </button>
+                <button
+                  onClick={() => setViewMode('preview')}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
+                    viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
+                  )}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  معاينة
+                </button>
               </div>
 
             </div>
@@ -1051,7 +1003,7 @@ ${textToImprove}`;
               {/* Text Editor content */}
               {viewMode === 'edit' ? (
                 <div className={cn(
-                  "flex-1 flex flex-col min-h-[400px] relative transition-all duration-500 rounded-xl p-2",
+                  "flex-1 flex flex-col min-h-[150px] relative transition-all duration-500 rounded-xl p-2",
                   aiEnhancing && "animate-pulse",
                   aiEnhancing && aiEnhancingProvider === 'gemini' && "border border-indigo-500/30 bg-indigo-500/[0.01] shadow-[0_0_20px_rgba(99,102,241,0.05)]",
                   aiEnhancing && aiEnhancingProvider === 'openai' && "border border-emerald-500/30 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.05)]",
@@ -1065,15 +1017,89 @@ ${textToImprove}`;
                     onInput={handleEditorInput}
                     onPaste={handlePaste}
                     className={cn(
-                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[400px] text-right focus:outline-none overflow-y-auto",
+                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[150px] text-right focus:outline-none overflow-y-auto",
                       fontFamily,
                       fontSize
                     )}
                     style={{ direction: 'rtl' }}
                     placeholder="اكتب البرومبت هنا..."
                   />
-                  <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between">
-                    <span>عدد الأحرف: {selectedPrompt ? selectedPrompt.content.length : 0}</span>
+                  <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between flex-wrap gap-2 select-none">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span>عدد الأحرف: {selectedPrompt ? selectedPrompt.content.length : 0}</span>
+                      
+                      {/* AI Enhancer Buttons - Compact bottom right placement adjacent to settings */}
+                      {viewMode === 'edit' && hasAnyAi && (
+                        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-surface2-dark border border-border/30 rounded-lg shadow-3xs">
+                          {isGeminiActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleAiEnhance('gemini')}
+                              disabled={aiEnhancing}
+                              className={cn(
+                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
+                                aiEnhancingProvider === 'gemini'
+                                  ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
+                                  : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
+                              )}
+                              title="تحسين صياغة البرومبت عبر Gemini"
+                            >
+                              <Sparkles className={cn("w-3 h-3", aiEnhancingProvider === 'gemini' && "animate-spin")} />
+                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
+                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
+                              </span>
+                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
+                                Gemini جاهز ومفعّل
+                              </span>
+                            </button>
+                          )}
+                          {isOpenAIActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleAiEnhance('openai')}
+                              disabled={aiEnhancing}
+                              className={cn(
+                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
+                                aiEnhancingProvider === 'openai'
+                                  ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
+                                  : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
+                              )}
+                              title="تحسين صياغة البرومبت عبر OpenAI"
+                            >
+                              <Cpu className={cn("w-3 h-3", aiEnhancingProvider === 'openai' && "animate-spin")} />
+                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
+                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
+                              </span>
+                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
+                                OpenAI جاهز ومفعّل
+                              </span>
+                            </button>
+                          )}
+                          {isClaudeActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleAiEnhance('claude')}
+                              disabled={aiEnhancing}
+                              className={cn(
+                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
+                                aiEnhancingProvider === 'claude'
+                                  ? "bg-orange-500 text-white border-orange-600 shadow-sm"
+                                  : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
+                              )}
+                              title="تحسين صياغة البرومبت عبر Claude"
+                            >
+                              <Brain className={cn("w-3 h-3", aiEnhancingProvider === 'claude' && "animate-spin")} />
+                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
+                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
+                              </span>
+                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
+                                Claude جاهز ومفعّل
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> تم الحفظ تلقائياً في المتصفح</span>
                   </div>
 
