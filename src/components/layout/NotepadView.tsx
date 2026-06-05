@@ -45,7 +45,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 export function NotepadView() {
-  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm, setViewMode } = useApp();
+  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm, setViewMode: setAppViewMode } = useApp();
   const navigate = useNavigate();
   
   // Folders State loaded from local storage
@@ -673,7 +673,7 @@ ${textToImprove}`;
         <div className="p-4 border-t border-border/30 bg-surface-light dark:bg-surface-dark shrink-0 select-none">
           <button
             onClick={() => {
-              setViewMode('detailed');
+              setAppViewMode('detailed');
               navigate('/settings');
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-surface2-dark hover:bg-slate-100 dark:hover:bg-surface2-dark/80 border border-border/30 rounded-xl text-xs font-bold hover:text-accent hover:border-accent/30 shadow-xs hover:shadow-sm transition-all duration-300 cursor-pointer text-slate-600 dark:text-slate-300"
