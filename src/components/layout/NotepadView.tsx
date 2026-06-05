@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../app/app-provider';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { 
@@ -45,6 +46,7 @@ const HIGHLIGHT_COLORS = [
 
 export function NotepadView() {
   const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm } = useApp();
+  const navigate = useNavigate();
   
   // Folders State loaded from local storage
   const [folders, setFolders] = useState<FolderType[]>(() => {
@@ -652,6 +654,17 @@ ${textToImprove}`;
               </div>
             );
           })}
+        </div>
+
+        {/* Sidebar Footer: Quick Settings Access */}
+        <div className="p-4 border-t border-border/30 bg-surface2-light/20 dark:bg-surface2-dark/20 shrink-0 select-none">
+          <button
+            onClick={() => navigate('/settings')}
+            className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-white dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black hover:text-accent hover:border-accent/40 shadow-sm hover:shadow transition-all duration-300 cursor-pointer text-slate-700 dark:text-slate-200"
+          >
+            <Sliders className="w-4 h-4 text-accent animate-pulse" />
+            <span>الإعدادات السريعة</span>
+          </button>
         </div>
       </div>
 

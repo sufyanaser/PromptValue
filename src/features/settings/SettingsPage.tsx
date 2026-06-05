@@ -5,7 +5,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Settings, Globe, Moon, Save, Database, Shield, Info, Keyboard, Sparkles, Cloud } from 'lucide-react';
+import { Settings, Globe, Moon, Save, Database, Shield, Info, Keyboard, Sparkles, Cloud, Check } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 export function SettingsPage() {
@@ -275,13 +275,22 @@ export function SettingsPage() {
                      <p className="text-xs font-medium leading-relaxed">تكامل API يسمح لك بتحسين البرومبتات، اختبارها، وتوليد اقتراحات ذكية مباشرة داخل التطبيق.</p>
                   </div>
 
-                  <div className="space-y-2">
+                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold opacity-70 pr-1">Gemini API Key</label>
+                      {!!data.settings.geminiApiKey?.trim() && (
+                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
+                          <Check className="w-3 h-3 text-success" />
+                          <span>مفعّل ونشط</span>
+                        </span>
+                      )}
+                    </div>
                     <Input 
-                      label="Gemini API Key"
                       type="password"
                       placeholder="أدخل مفتاح Gemini API هنا..."
                       value={data.settings.geminiApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, geminiApiKey: e.target.value } })}
+                      className={cn(!!data.settings.geminiApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
                     />
                     <Button 
                       size="sm" 
@@ -297,12 +306,21 @@ export function SettingsPage() {
                   <div className="h-[1px] bg-border/40 w-full my-4" />
 
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold opacity-70 pr-1">OpenAI API Key (ChatGPT / Copilot)</label>
+                      {!!data.settings.openaiApiKey?.trim() && (
+                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
+                          <Check className="w-3 h-3 text-success" />
+                          <span>مفعّل ونشط</span>
+                        </span>
+                      )}
+                    </div>
                     <Input 
-                      label="OpenAI API Key (ChatGPT / Copilot)"
                       type="password"
                       placeholder="أدخل مفتاح OpenAI API هنا..."
                       value={data.settings.openaiApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, openaiApiKey: e.target.value } })}
+                      className={cn(!!data.settings.openaiApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
                     />
                     <Button 
                       size="sm" 
@@ -318,12 +336,21 @@ export function SettingsPage() {
                   <div className="h-[1px] bg-border/40 w-full my-4" />
 
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold opacity-70 pr-1">Anthropic API Key (Claude)</label>
+                      {!!data.settings.claudeApiKey?.trim() && (
+                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
+                          <Check className="w-3 h-3 text-success" />
+                          <span>مفعّل ونشط</span>
+                        </span>
+                      )}
+                    </div>
                     <Input 
-                      label="Anthropic API Key (Claude)"
                       type="password"
                       placeholder="أدخل مفتاح Anthropic API هنا..."
                       value={data.settings.claudeApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, claudeApiKey: e.target.value } })}
+                      className={cn(!!data.settings.claudeApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
                     />
                     <Button 
                       size="sm" 
