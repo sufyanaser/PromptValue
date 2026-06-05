@@ -403,20 +403,6 @@ ${textToImprove}`;
                    </div>
                    {hasAnyAi && (
                      <div className="flex items-center gap-1.5 p-1 bg-white/70 dark:bg-slate-900/85 border border-border/30 rounded-full shadow-sm select-none">
-                        {isGeminiActive && (
-                          <button
-                            type="button"
-                            onClick={() => handleAiEnhance('gemini')}
-                            disabled={aiEnhancing}
-                            className={cn(
-                              "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
-                              aiEnhancingProvider === 'gemini' 
-                                ? "bg-indigo-500/20 text-indigo-500 border-indigo-500/30 shadow-indigo-500/20 shadow-sm animate-pulse" 
-                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:scale-105"
-                            )}
-                          >
-                            <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin text-indigo-500")} />
-                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
                               تحسين صياغة البرومبت عبر Gemini
                             </span>
                           </button>
