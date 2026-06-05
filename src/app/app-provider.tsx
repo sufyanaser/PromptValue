@@ -81,16 +81,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3500);
   };
 
+  // Load initial data from Electron if available
+  useEffect(() => {
+    const pv = (window as any).PromptVault;
+    if (pv && pv.storage) {
+      pv.storage.load().then((loadedData: any) => {
+        if (loadedData) {
+          setData(loadedData);
+          if (loadedData.settings) {
+            if (loadedData.settings.theme) {
+              setThemeState(loadedData.settings.theme === 'dark' ? 'dark' : 'light');
+            }
+            if (loadedData.settings.defaultView) {
+              setViewModeState(loadedData.settings.defaultView === 'notepad' ? 'notepad' : 'detailed');
+            }
+          }
+        } else {
+          // If no local file database exists on first load, save current initial data
+          pv.storage.save(data);
+        }
+      }).catch((err: any) => {
+        console.error("Failed to load database from Electron:", err);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     localStore.save(data);
+    
+    // Sync with Electron file storage
+    const pv = (window as any).PromptVault;
+    if (pv && pv.storage) {
+      pv.storage.save(data);
+    }
+
     // Apply theme classes to document
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
     // Sync with Electron native theme
-    const pv = (window as any).PromptVault;
     if (pv && pv.theme) {
       pv.theme.setTheme(theme);
     }

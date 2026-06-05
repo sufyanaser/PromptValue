@@ -12,7 +12,8 @@ contextBridge.exposeInMainWorld('PromptVault', {
   },
   files: {
     importPrompts: () => ipcRenderer.invoke('files:import'),
-    exportPrompts: (format) => ipcRenderer.invoke('files:export', format)
+    exportPrompts: (format) => ipcRenderer.invoke('files:export', format),
+    selectDirectory: () => ipcRenderer.invoke('dialog:selectDirectory')
   },
   theme: {
     setTheme: (theme) => ipcRenderer.invoke('theme:set', theme)
