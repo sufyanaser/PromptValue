@@ -9,18 +9,18 @@ import { Settings, Globe, Moon, Save, Database, Shield, Info, Keyboard, Sparkles
 import { cn } from '../../lib/cn';
 
 export function SettingsPage() {
-  const { data, theme, setTheme, updateData, showToast, createBackup } = useApp();
+  const { data, theme, setTheme, updateData, showToast, createBackup, t } = useApp();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = React.useState('عام');
+  const [activeTab, setActiveTab] = React.useState('general');
   const [testingProvider, setTestingProvider] = React.useState<string | null>(null);
 
   const tabs = [
-    { name: 'عام', icon: Globe },
-    { name: 'الذكاء الاصطناعي', icon: Sparkles },
-    { name: 'المزامنة السحابية', icon: Cloud },
-    { name: 'النسخ الاحتياطي', icon: Shield },
-    { name: 'الاختصارات', icon: Keyboard },
-    { name: 'حول', icon: Info },
+    { id: 'general', name: t('settings.tabGeneral'), icon: Globe },
+    { id: 'ai', name: t('settings.tabAI'), icon: Sparkles },
+    { id: 'cloud', name: t('settings.tabCloud'), icon: Cloud },
+    { id: 'backup', name: t('settings.tabBackup'), icon: Shield },
+    { id: 'shortcuts', name: t('settings.tabShortcuts'), icon: Keyboard },
+    { id: 'about', name: t('settings.tabAbout'), icon: Info },
   ];
 
   const handleSelectDirectory = async () => {
@@ -30,38 +30,38 @@ export function SettingsPage() {
         const newPath = await pv.files.selectDirectory();
         if (newPath) {
           updateData({ settings: { ...data.settings, databasePath: newPath } });
-          showToast('تمت إعادة تعيين مجلد قاعدة البيانات بنجاح', 'success');
+          showToast(t('settings.pathChangeSuccess'), 'success');
         }
       } catch (err) {
-        showToast('فشل في تعيين مسار قاعدة البيانات', 'danger');
+        showToast(t('settings.pathChangeFail'), 'danger');
       }
     } else {
-      showToast('تغيير مسار قاعدة البيانات متاح فقط في نسخة سطح المكتب', 'warning');
+      showToast(t('settings.desktopOnlyWarning'), 'warning');
     }
   };
 
   const testApiKey = (provider: string, key?: string) => {
     if (!key || key.trim() === '') {
-      showToast('يرجى إدخال مفتاح الاتصال أولاً قبل الاختبار', 'warning');
+      showToast(t('settings.testInputWarning'), 'warning');
       return;
     }
     setTestingProvider(provider);
     setTimeout(() => {
       setTestingProvider(null);
-      showToast(`تم التحقق من مفتاح ${provider} بنجاح والاتصال بالخادم سليم!`, 'success');
+      showToast(t('settings.testSuccessToast').replace('{provider}', provider), 'success');
     }, 1500);
   };
 
   const triggerManualBackup = () => {
     createBackup('manual');
-    showToast('تم إنشاء نسخة احتياطية جديدة للبيانات محلياً بنجاح', 'success');
+    showToast(t('settings.backupSuccessToast'), 'success');
   };
 
   return (
     <div className="space-y-10">
       <PageHeader
-        title="الإعدادات"
-        subtitle="خصص تجربة استخدام PromptVault بما يناسب احتياجاتك وتفضيلاتك."
+        title={t('settings.title')}
+        subtitle={t('settings.subtitle')}
       />
 
       <div className="grid grid-cols-12 gap-8">
@@ -69,15 +69,15 @@ export function SettingsPage() {
           <Card className="p-2 shadow-inner-sm bg-surface2-light dark:bg-surface2-dark border-transparent">
             {tabs.map((tab) => (
               <button
-                key={tab.name}
+                key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.name)}
+                onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "w-full text-right px-6 py-4 rounded-xl text-sm font-black transition-all flex items-center gap-3 cursor-pointer",
-                  activeTab === tab.name ? "bg-white dark:bg-surface-dark shadow-sm text-accent" : "opacity-50 hover:bg-white/50 dark:hover:bg-white/5"
+                  "w-full text-start px-6 py-4 rounded-xl text-sm font-black transition-all flex items-center gap-3 cursor-pointer",
+                  activeTab === tab.id ? "bg-white dark:bg-surface-dark shadow-sm text-accent" : "opacity-50 hover:bg-white/50 dark:hover:bg-white/5"
                 )}
               >
-                <tab.icon className={cn("w-4 h-4", activeTab === tab.name ? "text-accent" : "opacity-40")} />
+                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-accent" : "opacity-40")} />
                 {tab.name}
               </button>
             ))}
@@ -85,19 +85,19 @@ export function SettingsPage() {
         </div>
 
         <div className="col-span-12 lg:col-span-9 space-y-8">
-          {activeTab === 'عام' && (
+          {activeTab === 'general' && (
             <section className="space-y-4">
               <h3 className="text-xl font-black flex items-center gap-3">
                 <Globe className="w-6 h-6 text-accent" />
-                الإعدادات العامة
+                {t('settings.generalSettings')}
               </h3>
               <div className="grid grid-cols-1 gap-4">
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">المظهر المرئي</span>
-                        <span className="text-xs opacity-50 font-medium">اختر بين الوضع الفاتح، الداكن، أو التلقائي.</span>
+                        <span className="font-bold">{t('settings.visualTheme')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.themeDesc')}</span>
                       </div>
                       <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40">
                         <button
@@ -105,14 +105,14 @@ export function SettingsPage() {
                           onClick={() => setTheme('light')}
                           className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'light' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
                         >
-                          فاتح
+                          {t('settings.themeLight')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setTheme('dark')}
                           className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'dark' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
                         >
-                          داكن
+                          {t('settings.themeDark')}
                         </button>
                       </div>
                     </div>
@@ -123,8 +123,8 @@ export function SettingsPage() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">لغة التطبيق الافتراضية</span>
-                        <span className="text-xs opacity-50 font-medium">حدد اللغة المفضلة للواجهة البرمجية.</span>
+                        <span className="font-bold">{t('settings.appLanguage')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.languageDesc')}</span>
                       </div>
                       <select
                         value={data.settings.language || 'ar'}
@@ -142,8 +142,8 @@ export function SettingsPage() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">الحفظ التلقائي</span>
-                        <span className="text-xs opacity-50 font-medium">حفظ التغييرات تلقائياً عند التحرير في المحرر.</span>
+                        <span className="font-bold">{t('settings.autosaveLabel')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.visualTheme') === 'Light' ? t('settings.autosaveDesc') : t('settings.autosaveDesc')}</span>
                       </div>
                       <button
                         type="button"
@@ -167,8 +167,8 @@ export function SettingsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col gap-1">
-                          <span className="font-bold">فترة الحفظ التلقائي</span>
-                          <span className="text-xs opacity-50 font-medium">الفترة الزمنية بين عمليات الحفظ التلقائي (بالدقائق).</span>
+                          <span className="font-bold">{t('settings.autosaveIntervalLabel')}</span>
+                          <span className="text-xs opacity-50 font-medium">{t('settings.autosaveIntervalDesc')}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <input 
@@ -180,7 +180,7 @@ export function SettingsPage() {
                             className="w-32 accent-accent cursor-pointer"
                           />
                           <span className="text-xs font-black bg-surface2-light dark:bg-surface2-dark px-2.5 py-1 rounded-lg">
-                            {data.settings.autosaveInterval || 5} دقيقة
+                            {t('settings.autosaveIntervalValue').replace('{val}', String(data.settings.autosaveInterval || 5))}
                           </span>
                         </div>
                       </div>
@@ -192,8 +192,8 @@ export function SettingsPage() {
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">عرض معاينة البرومبت</span>
-                        <span className="text-xs opacity-50 font-medium">إظهار بطاقات معاينة سريعة للبرومبت عند التصفح.</span>
+                        <span className="font-bold">{t('settings.promptPreviewLabel')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.promptPreviewDesc')}</span>
                       </div>
                       <button
                         type="button"
@@ -214,8 +214,8 @@ export function SettingsPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">عرض تلميحات المساعدة (Tooltips)</span>
-                        <span className="text-xs opacity-50 font-medium">عرض إرشادات نصية صغيرة عند الحوم فوق عناصر واجهة المستخدم.</span>
+                        <span className="font-bold">{t('settings.tooltipsLabel')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.tooltipsDesc')}</span>
                       </div>
                       <button
                         type="button"
@@ -238,8 +238,8 @@ export function SettingsPage() {
                   <CardContent className="pt-6">
                     <div className="flex flex-col gap-4">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">موقع قاعدة البيانات</span>
-                        <span className="text-xs opacity-50 font-medium">المجلد المحلي الذي تُخزن فيه بيانات البرومبتات. سيتم ترحيل البيانات تلقائياً للموقع المختار.</span>
+                        <span className="font-bold">{t('settings.dbLocationLabel')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.dbLocationDesc')}</span>
                       </div>
                       <div className="flex gap-2">
                         <input
@@ -253,7 +253,7 @@ export function SettingsPage() {
                           type="button" 
                           className="px-6 bg-surface2-light dark:bg-surface2-dark border border-border/40 rounded-xl text-xs font-bold hover:bg-accent hover:text-white hover:border-accent transition-all cursor-pointer text-slate-700 dark:text-slate-200"
                         >
-                          تغيير المسار
+                          {t('settings.changePathBtn')}
                         </button>
                       </div>
                     </div>
@@ -263,16 +263,16 @@ export function SettingsPage() {
             </section>
           )}
 
-          {activeTab === 'الذكاء الاصطناعي' && (
+          {activeTab === 'ai' && (
             <section className="space-y-4">
               <h3 className="text-xl font-black flex items-center gap-3">
                 <Sparkles className="w-6 h-6 text-success" />
-                ذكاء اصطناعي مدمج
+                {t('settings.aiTitle')}
               </h3>
               <Card>
                 <CardContent className="pt-6 space-y-4">
                   <div className="p-4 bg-success/5 border border-success/20 rounded-2xl">
-                     <p className="text-xs font-medium leading-relaxed">تكامل API يسمح لك بتحسين البرومبتات، اختبارها، وتوليد اقتراحات ذكية مباشرة داخل التطبيق.</p>
+                     <p className="text-xs font-medium leading-relaxed">{t('settings.aiDesc')}</p>
                   </div>
 
                    <div className="space-y-2">
@@ -281,13 +281,13 @@ export function SettingsPage() {
                       {!!data.settings.geminiApiKey?.trim() && (
                         <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
                           <Check className="w-3 h-3 text-success" />
-                          <span>مفعّل ونشط</span>
+                          <span>{t('settings.apiKeyActive')}</span>
                         </span>
                       )}
                     </div>
                     <Input 
                       type="password"
-                      placeholder="أدخل مفتاح Gemini API هنا..."
+                      placeholder={t('settings.geminiPlaceholder')}
                       value={data.settings.geminiApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, geminiApiKey: e.target.value } })}
                       className={cn(!!data.settings.geminiApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
@@ -299,7 +299,7 @@ export function SettingsPage() {
                       loading={testingProvider === 'Gemini'}
                       onClick={() => testApiKey('Gemini', data.settings.geminiApiKey)}
                     >
-                      اختبار اتصال Gemini
+                      {t('settings.testBtn').replace('{provider}', 'Gemini')}
                     </Button>
                   </div>
 
@@ -311,13 +311,13 @@ export function SettingsPage() {
                       {!!data.settings.openaiApiKey?.trim() && (
                         <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
                           <Check className="w-3 h-3 text-success" />
-                          <span>مفعّل ونشط</span>
+                          <span>{t('settings.apiKeyActive')}</span>
                         </span>
                       )}
                     </div>
                     <Input 
                       type="password"
-                      placeholder="أدخل مفتاح OpenAI API هنا..."
+                      placeholder={t('settings.openaiPlaceholder')}
                       value={data.settings.openaiApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, openaiApiKey: e.target.value } })}
                       className={cn(!!data.settings.openaiApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
@@ -329,7 +329,7 @@ export function SettingsPage() {
                       loading={testingProvider === 'OpenAI'}
                       onClick={() => testApiKey('OpenAI', data.settings.openaiApiKey)}
                     >
-                      اختبار اتصال OpenAI
+                      {t('settings.testBtn').replace('{provider}', 'OpenAI')}
                     </Button>
                   </div>
 
@@ -341,13 +341,13 @@ export function SettingsPage() {
                       {!!data.settings.claudeApiKey?.trim() && (
                         <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
                           <Check className="w-3 h-3 text-success" />
-                          <span>مفعّل ونشط</span>
+                          <span>{t('settings.apiKeyActive')}</span>
                         </span>
                       )}
                     </div>
                     <Input 
                       type="password"
-                      placeholder="أدخل مفتاح Anthropic API هنا..."
+                      placeholder={t('settings.claudePlaceholder')}
                       value={data.settings.claudeApiKey || ''}
                       onChange={e => updateData({ settings: { ...data.settings, claudeApiKey: e.target.value } })}
                       className={cn(!!data.settings.claudeApiKey?.trim() && "border-success/40 focus:border-success bg-success/[0.01]")}
@@ -359,21 +359,21 @@ export function SettingsPage() {
                       loading={testingProvider === 'Anthropic'}
                       onClick={() => testApiKey('Anthropic', data.settings.claudeApiKey)}
                     >
-                      اختبار اتصال Anthropic
+                      {t('settings.testBtn').replace('{provider}', 'Anthropic')}
                     </Button>
                   </div>
 
-                  <p className="text-[10px] opacity-50 font-bold pr-1 pt-2">يتم تخزين المفاتيح محلياً على جهازك فقط ولا يتم مشاركتها مع أي طرف ثالث.</p>
+                  <p className="text-[10px] opacity-50 font-bold pr-1 pt-2">{t('settings.keyStoredNote')}</p>
                 </CardContent>
               </Card>
             </section>
           )}
 
-          {activeTab === 'المزامنة السحابية' && (
+          {activeTab === 'cloud' && (
             <section className="space-y-4">
               <h3 className="text-xl font-black flex items-center gap-3">
                 <Cloud className="w-6 h-6 text-info" />
-                المزامنة السحابية
+                {t('settings.cloudTitle')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <Card className={cn(data.settings.googleDriveEnabled && "border-info/30")}>
@@ -384,27 +384,27 @@ export function SettingsPage() {
                           </div>
                           <div className="flex flex-col">
                              <span className="font-bold">Google Drive</span>
-                             <span className="text-[10px] opacity-40 font-black">مزامنة البيانات عبر جوجل درايف</span>
+                             <span className="text-[10px] opacity-40 font-black">{t('settings.googleDriveDesc')}</span>
                           </div>
                        </div>
                        
                        {data.settings.googleDriveEnabled && (
                           <div className="space-y-2">
-                            <Input 
-                              label="رمز الوصول السحابي (Access Token)"
-                              placeholder="أدخل رمز Google Access Token..."
-                              type="password"
-                              value={data.settings.googleDriveApiKey || ''}
-                              onChange={e => updateData({ settings: { ...data.settings, googleDriveApiKey: e.target.value } })}
-                            />
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              type="button"
-                              onClick={() => testApiKey('Google Drive Sync', data.settings.googleDriveApiKey)}
-                            >
-                              اختبار الاتصال بالسحابة
-                            </Button>
+                             <Input 
+                               label="رمز الوصول السحابي (Access Token)"
+                               placeholder={t('settings.googleDriveTokenPlaceholder')}
+                               type="password"
+                               value={data.settings.googleDriveApiKey || ''}
+                               onChange={e => updateData({ settings: { ...data.settings, googleDriveApiKey: e.target.value } })}
+                             />
+                             <Button 
+                               size="sm" 
+                               variant="ghost" 
+                               type="button"
+                               onClick={() => testApiKey('Google Drive Sync', data.settings.googleDriveApiKey)}
+                             >
+                               {t('settings.testCloudBtn')}
+                             </Button>
                           </div>
                        )}
 
@@ -414,7 +414,7 @@ export function SettingsPage() {
                          type="button"
                          onClick={() => updateData({ settings: { ...data.settings, googleDriveEnabled: !data.settings.googleDriveEnabled } })}
                        >
-                          {data.settings.googleDriveEnabled ? 'إلغاء الربط' : 'ربط الحساب الآن'}
+                          {data.settings.googleDriveEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
                        </Button>
                     </CardContent>
                  </Card>
@@ -427,7 +427,7 @@ export function SettingsPage() {
                           </div>
                           <div className="flex flex-col">
                              <span className="font-bold">Dropbox</span>
-                             <span className="text-[10px] opacity-40 font-black">مزامنة البيانات عبر دروب بوكس</span>
+                             <span className="text-[10px] opacity-40 font-black">{t('settings.dropboxDesc')}</span>
                           </div>
                        </div>
 
@@ -435,7 +435,7 @@ export function SettingsPage() {
                           <div className="space-y-2">
                             <Input 
                               label="مفتاح التطبيق (Dropbox Access Token)"
-                              placeholder="أدخل Dropbox Access Token..."
+                              placeholder={t('settings.dropboxTokenPlaceholder')}
                               type="password"
                               value={data.settings.dropboxApiKey || ''}
                               onChange={e => updateData({ settings: { ...data.settings, dropboxApiKey: e.target.value } })}
@@ -446,7 +446,7 @@ export function SettingsPage() {
                               type="button"
                               onClick={() => testApiKey('Dropbox Sync', data.settings.dropboxApiKey)}
                             >
-                              اختبار الاتصال بالسحابة
+                              {t('settings.testCloudBtn')}
                             </Button>
                           </div>
                        )}
@@ -457,7 +457,7 @@ export function SettingsPage() {
                          type="button"
                          onClick={() => updateData({ settings: { ...data.settings, dropboxEnabled: !data.settings.dropboxEnabled } })}
                        >
-                          {data.settings.dropboxEnabled ? 'إلغاء الربط' : 'ربط الحساب الآن'}
+                          {data.settings.dropboxEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
                        </Button>
                     </CardContent>
                  </Card>
@@ -465,20 +465,20 @@ export function SettingsPage() {
             </section>
           )}
 
-          {activeTab === 'النسخ الاحتياطي' && (
+          {activeTab === 'backup' && (
              <section className="space-y-6">
                 <h3 className="text-xl font-black flex items-center gap-3">
                   <Shield className="w-6 h-6 text-success" />
-                  الأمان والنسخ الاحتياطي
+                  {t('settings.backupTitle')}
                 </h3>
                 
                 <Card>
-                  <CardHeader title="إعدادات النسخ الاحتياطي التلقائي" />
+                  <CardHeader title={t('settings.backupEnableLabel')} />
                   <CardContent className="space-y-6 pt-4">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="font-bold">تمكين النسخ الاحتياطي التلقائي</span>
-                        <span className="text-xs opacity-50 font-medium">إنشاء نسخ احتياطية للبيانات بشكل دوري وتلقائي.</span>
+                        <span className="font-bold">{t('settings.backupEnableLabel')}</span>
+                        <span className="text-xs opacity-50 font-medium">{t('settings.backupEnableDesc')}</span>
                       </div>
                       <button
                         type="button"
@@ -500,25 +500,25 @@ export function SettingsPage() {
                         <div className="h-[1px] bg-border/40 w-full" />
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col gap-1">
-                            <span className="font-bold">تكرار النسخ الاحتياطي</span>
-                            <span className="text-xs opacity-50 font-medium">معدل تكرار النسخ الاحتياطي المفضل.</span>
+                            <span className="font-bold">{t('settings.backupFreqLabel')}</span>
+                            <span className="text-xs opacity-50 font-medium">{t('settings.backupFreqDesc')}</span>
                           </div>
                           <select
                             value={data.settings.backupFrequency || 'daily'}
                             onChange={e => updateData({ settings: { ...data.settings, backupFrequency: e.target.value as any } })}
                             className="h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
                           >
-                            <option value="daily">يومي (Daily)</option>
-                            <option value="weekly">أسبوعي (Weekly)</option>
-                            <option value="monthly">شهري (Monthly)</option>
+                            <option value="daily">{t('settings.backupFreqDaily')}</option>
+                            <option value="weekly">{t('settings.backupFreqWeekly')}</option>
+                            <option value="monthly">{t('settings.backupFreqMonthly')}</option>
                           </select>
                         </div>
 
                         <div className="h-[1px] bg-border/40 w-full" />
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col gap-1">
-                            <span className="font-bold">الحد الأقصى للنسخ المحفوظة</span>
-                            <span className="text-xs opacity-50 font-medium">عدد ملفات النسخ الاحتياطي التي يتم الاحتفاظ بها قبل حذف الأقدم.</span>
+                            <span className="font-bold">{t('settings.backupRetentionLabel')}</span>
+                            <span className="text-xs opacity-50 font-medium">{t('settings.backupRetentionDesc')}</span>
                           </div>
                           <input
                             type="number"
@@ -537,19 +537,84 @@ export function SettingsPage() {
                 <Card>
                     <CardContent className="pt-6 space-y-4">
                       <p className="text-xs font-bold leading-relaxed opacity-70">
-                          تُخزن جميع بياناتك، برومبتاتك، وإعداداتك محلياً كلياً (Local-first). يمكنك في أي وقت بدء عملية نسخ احتياطي فوري لتصدير قاعدة البيانات كاملة.
+                          {t('settings.localFirstNote')}
                       </p>
                       <div className="flex flex-wrap gap-3 pt-2">
                         <Button variant="secondary" type="button" onClick={triggerManualBackup} className="font-bold">
-                          تنفيذ نسخ احتياطي فوري
+                          {t('settings.backupNowBtn')}
                         </Button>
                         <Button variant="ghost" type="button" onClick={() => navigate('/backups')} className="font-bold">
-                          إدارة النسخ الاحتياطية السابقة
+                          {t('settings.manageBackupsBtn')}
                         </Button>
                       </div>
                     </CardContent>
                 </Card>
              </section>
+          )}
+
+          {activeTab === 'shortcuts' && (
+            <section className="space-y-4">
+              <h3 className="text-xl font-black flex items-center gap-3">
+                <Keyboard className="w-6 h-6 text-accent" />
+                {t('settings.shortcutsTitle')}
+              </h3>
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <p className="text-xs font-medium opacity-60">{t('settings.shortcutsDesc')}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
+                      <span className="text-xs font-bold">{t('settings.shortcutSearch')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+K</kbd>
+                    </div>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
+                      <span className="text-xs font-bold">{t('settings.shortcutNewPrompt')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+N</kbd>
+                    </div>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
+                      <span className="text-xs font-bold">{t('settings.shortcutSave')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+S</kbd>
+                    </div>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
+                      <span className="text-xs font-bold">{t('settings.shortcutToggleSidebar')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+B</kbd>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          {activeTab === 'about' && (
+            <section className="space-y-4">
+              <h3 className="text-xl font-black flex items-center gap-3">
+                <Info className="w-6 h-6 text-accent" />
+                {t('settings.aboutTitle')}
+              </h3>
+              <Card>
+                <CardContent className="pt-6 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20">
+                      <Database className="text-white w-10 h-10" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-black leading-none">PromptVault</h4>
+                      <p className="text-xs opacity-50 mt-1.5 font-bold">{t('settings.aboutDesc')}</p>
+                    </div>
+                  </div>
+                  <div className="h-[1px] bg-border/40 w-full" />
+                  <div className="space-y-2.5 text-xs font-bold opacity-80">
+                    <div className="flex justify-between">
+                      <span>{t('settings.aboutVersion')}</span>
+                      <span className="font-mono">v1.2.1</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>{t('settings.aboutAuthor')}</span>
+                      <span>Sufyan Aser</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
           )}
         </div>
       </div>

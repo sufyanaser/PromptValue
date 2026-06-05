@@ -7,13 +7,13 @@ import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
 
 export function DashboardPage() {
-  const { data } = useApp();
+  const { data, t, lang } = useApp();
 
   const stats = [
-    { label: 'إجمالي البرومبتات', value: data.prompts.length.toLocaleString('ar-EG'), subLabel: 'برومبت محفوظ', icon: FileText, color: 'text-info' },
-    { label: 'المفضلة', value: data.prompts.filter(p => p.isFavorite).length.toLocaleString('ar-EG'), subLabel: 'برومبت مفضل', icon: Star, color: 'text-accent' },
-    { label: 'التصنيفات', value: data.categories.length.toLocaleString('ar-EG'), subLabel: 'تصنيف نشط', icon: Palette, color: 'text-success' },
-    { label: 'الوسوم', value: data.tags.length.toLocaleString('ar-EG'), subLabel: 'وسم مستخدم', icon: Hash, color: 'text-danger' },
+    { label: t('dashboard.totalPrompts'), value: data.prompts.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'), subLabel: t('dashboard.promptsSaved'), icon: FileText, color: 'text-info' },
+    { label: t('dashboard.favorites'), value: data.prompts.filter(p => p.isFavorite).length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'), subLabel: t('dashboard.promptsFavorited'), icon: Star, color: 'text-accent' },
+    { label: t('dashboard.categories'), value: data.categories.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'), subLabel: t('dashboard.categoriesActive'), icon: Palette, color: 'text-success' },
+    { label: t('dashboard.tags'), value: data.tags.length.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'), subLabel: t('dashboard.tagsUsed'), icon: Hash, color: 'text-danger' },
   ];
 
   // Most used: sorted by usageCount desc
@@ -25,35 +25,39 @@ export function DashboardPage() {
   // Recent edits: sorted by updatedAt desc
   const recentEdits = [...data.prompts].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, 5);
 
-  // Format date relative or exact for Arabic
+  // Format date relative or exact for Arabic/English
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
     
-    if (diffMins < 60) return `اليوم، منذ ${diffMins} د`;
+    if (diffMins < 60) return lang === 'ar' ? `اليوم، منذ ${diffMins} د` : `Today, ${diffMins}m ago`;
     
     const isToday = date.toDateString() === now.toDateString();
     if (isToday) {
-      return `اليوم، ${date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+      return lang === 'ar' 
+        ? `اليوم، ${date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}` 
+        : `Today, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const isYesterday = date.toDateString() === yesterday.toDateString();
     if (isYesterday) {
-      return `أمس، ${date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+      return lang === 'ar' 
+        ? `أمس، ${date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}` 
+        : `Yesterday, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
-    return date.toLocaleDateString('ar-EG');
+    return date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US');
   };
 
   return (
     <div className="space-y-10">
       <PageHeader
-        title="لوحة التحكم"
-        subtitle="نظرة تشغيلية سريعة على حالة مكتبة البرومبتات المحلية."
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.subtitle')}
       />
 
       {/* Stats Grid */}
@@ -62,7 +66,7 @@ export function DashboardPage() {
           <Card key={i} className="hover:scale-[1.02] transition-all cursor-pointer relative overflow-hidden bg-white dark:bg-surface-dark border-border/40">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="text-right">
+                <div className="text-start">
                   <p className="text-xs font-bold opacity-60 mb-1">{stat.label}</p>
                   <div className={cn("text-3xl font-black", stat.color)}>{stat.value}</div>
                 </div>
@@ -82,8 +86,8 @@ export function DashboardPage() {
         {/* Most Used Panel */}
         <Card className="bg-white dark:bg-surface-dark border-border/40">
           <CardHeader 
-            title="الأكثر استخداماً" 
-            subtitle="البرومبتات الأكثر طلباً واستدعاءً في عملياتك."
+            title={t('dashboard.mostUsed')} 
+            subtitle={t('dashboard.mostUsedSub')}
             icon={TrendingUp}
           />
           <CardContent>
@@ -96,15 +100,17 @@ export function DashboardPage() {
                 >
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-accent transition-colors">{prompt.title}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-black opacity-60">{prompt.usageCount} مرة</span>
-                    <ChevronLeft className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity" />
+                    <span className="text-xs font-mono font-black opacity-60">
+                      {t('dashboard.timesCount').replace('{count}', prompt.usageCount.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'))}
+                    </span>
+                    <ChevronLeft className={cn("w-4 h-4 opacity-0 group-hover:opacity-40 transition-all", lang === 'en' && "rotate-180")} />
                   </div>
                 </Link>
               ))}
               <div className="pt-2 border-t border-border/30 text-center">
                 <Link to="/prompts" className="inline-flex items-center gap-1 text-xs font-black text-accent hover:underline">
-                  عرض جميع البرومبتات الأكثر استخداماً
-                  <ChevronLeft className="w-4 h-4" />
+                  {t('dashboard.viewAllMostUsed')}
+                  <ChevronLeft className={cn("w-4 h-4", lang === 'en' && "rotate-180")} />
                 </Link>
               </div>
             </div>
@@ -114,8 +120,8 @@ export function DashboardPage() {
         {/* Recent Prompts Panel */}
         <Card className="bg-white dark:bg-surface-dark border-border/40">
           <CardHeader 
-            title="آخر البرومبتات" 
-            subtitle="آخر الإضافات التي تمت إلى مكتبتك المحلية."
+            title={t('dashboard.recentPrompts')} 
+            subtitle={t('dashboard.recentPromptsSub')}
             icon={FileText}
           />
           <CardContent>
@@ -127,13 +133,13 @@ export function DashboardPage() {
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-surface2-light dark:hover:bg-surface2-dark transition-colors cursor-pointer group"
                 >
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-accent transition-colors">{prompt.title}</span>
-                  <span className="text-[10px] opacity-40 font-bold font-mono">{new Date(prompt.createdAt).toLocaleDateString('ar-EG')}</span>
+                  <span className="text-[10px] opacity-40 font-bold font-mono">{new Date(prompt.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
                 </Link>
               ))}
               <div className="pt-2 border-t border-border/30 text-center">
                 <Link to="/prompts" className="inline-flex items-center gap-1 text-xs font-black text-accent hover:underline">
-                  عرض جميع البرومبتات
-                  <ChevronLeft className="w-4 h-4" />
+                  {t('dashboard.viewAllPrompts')}
+                  <ChevronLeft className={cn("w-4 h-4", lang === 'en' && "rotate-180")} />
                 </Link>
               </div>
             </div>
@@ -143,8 +149,8 @@ export function DashboardPage() {
         {/* Recent Edits Panel */}
         <Card className="bg-white dark:bg-surface-dark border-border/40">
           <CardHeader 
-            title="آخر تعديل" 
-            subtitle="آخر البرومبتات التي تم تحديثها مؤخراً."
+            title={t('dashboard.recentEdits')} 
+            subtitle={t('dashboard.recentEditsSub')}
             icon={Clock}
           />
           <CardContent>
@@ -161,8 +167,8 @@ export function DashboardPage() {
               ))}
               <div className="pt-2 border-t border-border/30 text-center">
                 <Link to="/prompts" className="inline-flex items-center gap-1 text-xs font-black text-accent hover:underline">
-                  عرض جميع البرومبتات
-                  <ChevronLeft className="w-4 h-4" />
+                  {t('dashboard.viewAllPrompts')}
+                  <ChevronLeft className={cn("w-4 h-4", lang === 'en' && "rotate-180")} />
                 </Link>
               </div>
             </div>
@@ -172,14 +178,14 @@ export function DashboardPage() {
         {/* Recent Activity Panel */}
         <Card className="bg-white dark:bg-surface-dark border-border/40">
           <CardHeader 
-            title="النشاط الأخير" 
-            subtitle="سجل العمليات والنشاطات الأخيرة على النظام."
+            title={t('dashboard.recentActivity')} 
+            subtitle={t('dashboard.recentActivitySub')}
             icon={History}
           />
           <CardContent>
             <div className="space-y-4">
               {data.activities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex gap-4 items-start border-r-2 border-accent/20 pr-4 py-1">
+                <div key={activity.id} className="flex gap-4 items-start border-s-2 border-accent/20 ps-4 py-1">
                   <div className="flex-1">
                     <p className="text-xs font-bold leading-relaxed text-slate-700 dark:text-slate-200">{activity.label}</p>
                     <span className="text-[9px] opacity-40 font-bold font-mono">{formatTime(activity.createdAt)}</span>
@@ -188,13 +194,13 @@ export function DashboardPage() {
               ))}
               {data.activities.length === 0 && (
                 <div className="py-12 text-center text-muted-light dark:text-muted-dark opacity-50 font-medium">
-                  لا توجد نشاطات مسجلة حالياً.
+                  {t('dashboard.noActivity')}
                 </div>
               )}
               <div className="pt-2 border-t border-border/30 text-center">
                 <span className="inline-flex items-center gap-1 text-xs font-black text-accent cursor-pointer hover:underline">
-                  عرض كل النشاطات
-                  <ChevronLeft className="w-4 h-4" />
+                  {t('dashboard.viewAllActivity')}
+                  <ChevronLeft className={cn("w-4 h-4", lang === 'en' && "rotate-180")} />
                 </span>
               </div>
             </div>

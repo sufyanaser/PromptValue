@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AppData, Prompt, Category, Tag, Settings, Backup } from '../types';
 import { localStore } from '../storage/local-store';
+import { getUniqueColor } from '../lib/colors';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 import { cn } from '../lib/cn';
+import { translations } from './translations';
 
 interface Toast {
   id: string;
@@ -44,6 +46,8 @@ interface AppContextType {
   viewMode: 'detailed' | 'notepad';
   setViewMode: (mode: 'detailed' | 'notepad') => void;
   confirm: (options: ConfirmOptions) => void;
+  lang: 'ar' | 'en';
+  t: (key: string) => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -60,6 +64,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     message: '',
     onConfirm: () => {},
   });
+
+  const lang = data.settings.language || 'ar';
+
+  const t = (key: string): string => {
+    const keys = key.split('.');
+    let result: any = translations[lang];
+    for (const k of keys) {
+      if (result && k in result) {
+        result = result[k];
+      } else {
+        // Fallback to Arabic translation if English doesn't exist
+        let fallback: any = translations['ar'];
+        for (const fk of keys) {
+          if (fallback && fk in fallback) {
+            fallback = fallback[fk];
+          } else {
+            return key; // return the key itself as last fallback
+          }
+        }
+        return fallback;
+      }
+    }
+    return typeof result === 'string' ? result : key;
+  };
 
   const confirm = (options: ConfirmOptions) => {
     setConfirmState({
@@ -112,10 +140,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (pv && pv.updater && pv.updater.onUpdateDownloaded) {
       const unsubscribe = pv.updater.onUpdateDownloaded(() => {
         confirm({
-          title: "تحديث متوفر",
-          message: "تحديث جديد جاهز للتثبيت. هل تريد إعادة تشغيل التطبيق وتثبيت التحديث الآن؟",
-          confirmText: "Relaunch",
-          cancelText: "لاحقاً",
+          title: t('common.updateAvailable'),
+          message: t('common.updateMessage'),
+          confirmText: t('common.relaunch'),
+          cancelText: t('common.later'),
           type: "info",
           onConfirm: () => {
             pv.updater.relaunch();
@@ -124,7 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       return unsubscribe;
     }
-  }, []);
+  }, [lang]);
 
   useEffect(() => {
     localStore.save(data);
@@ -146,6 +174,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (pv && pv.theme) {
       pv.theme.setTheme(theme);
     }
+
+    // Sync HTML document direction and language
+    const currentLang = data.settings.language || 'ar';
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLang;
   }, [data, theme]);
 
   const updateData = (newData: Partial<AppData>) => {
@@ -165,24 +198,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
       version: 1,
     };
-    setData(prev => ({
-      ...prev,
-      prompts: [newPrompt, ...prev.prompts],
-      activities: [{
-        id: Math.random().toString(36).substr(2, 9),
-        type: 'create',
-        label: `تم إنشاء برومبت جديد: ${newPrompt.title}`,
-        promptId: newPrompt.id,
-        createdAt: new Date().toISOString()
-      }, ...prev.activities]
-    }));
+    setData(prev => {
+      const newGlobalTags = [...prev.tags];
+      const existingColors = newGlobalTags.map(t => t.color);
+
+      p.tags?.forEach(tagName => {
+        const trimmedName = tagName.trim();
+        if (!trimmedName) return;
+        const exists = newGlobalTags.some(t => t.name.toLowerCase() === trimmedName.toLowerCase());
+        if (!exists) {
+          const uniqueColor = getUniqueColor(existingColors);
+          existingColors.push(uniqueColor);
+          newGlobalTags.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: trimmedName,
+            color: uniqueColor,
+            usageCount: 0
+          });
+        }
+      });
+
+      return {
+        ...prev,
+        tags: newGlobalTags,
+        prompts: [newPrompt, ...prev.prompts],
+        activities: [{
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'create',
+          label: `تم إنشاء برومبت جديد: ${newPrompt.title}`,
+          promptId: newPrompt.id,
+          createdAt: new Date().toISOString()
+        }, ...prev.activities]
+      };
+    });
   };
 
   const updatePrompt = (id: string, updates: Partial<Prompt>) => {
-    setData(prev => ({
-      ...prev,
-      prompts: prev.prompts.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p)
-    }));
+    setData(prev => {
+      const newGlobalTags = [...prev.tags];
+      const existingColors = newGlobalTags.map(t => t.color);
+
+      if (updates.tags) {
+        updates.tags.forEach(tagName => {
+          const trimmedName = tagName.trim();
+          if (!trimmedName) return;
+          const exists = newGlobalTags.some(t => t.name.toLowerCase() === trimmedName.toLowerCase());
+          if (!exists) {
+            const uniqueColor = getUniqueColor(existingColors);
+            existingColors.push(uniqueColor);
+            newGlobalTags.push({
+              id: Math.random().toString(36).substr(2, 9),
+              name: trimmedName,
+              color: uniqueColor,
+              usageCount: 0
+            });
+          }
+        });
+      }
+
+      return {
+        ...prev,
+        tags: newGlobalTags,
+        prompts: prev.prompts.map(p => p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p)
+      };
+    });
   };
 
   const deletePrompt = (id: string) => {
@@ -200,17 +279,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addCategory = (c: Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'promptCount'>) => {
-    const newCategory: Category = {
-      ...c,
-      id: Math.random().toString(36).substr(2, 9),
-      promptCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setData(prev => ({
-      ...prev,
-      categories: [...prev.categories, newCategory]
-    }));
+    setData(prev => {
+      const existingColors = prev.categories.map(cat => cat.color);
+      const finalColor = c.color || getUniqueColor(existingColors);
+      const newCategory: Category = {
+        ...c,
+        color: finalColor,
+        id: Math.random().toString(36).substr(2, 9),
+        promptCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      return {
+        ...prev,
+        categories: [...prev.categories, newCategory]
+      };
+    });
   };
 
   const updateCategory = (id: string, updates: Partial<Category>) => {
@@ -232,15 +316,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const addTag = (t: Omit<Tag, 'id' | 'usageCount'>) => {
-    const newTag: Tag = {
-      ...t,
-      id: Math.random().toString(36).substr(2, 9),
-      usageCount: 0
-    };
-    setData(prev => ({
-      ...prev,
-      tags: [...prev.tags, newTag]
-    }));
+    setData(prev => {
+      const existingColors = prev.tags.map(tag => tag.color);
+      const finalColor = t.color || getUniqueColor(existingColors);
+      const newTag: Tag = {
+        ...t,
+        color: finalColor,
+        id: Math.random().toString(36).substr(2, 9),
+        usageCount: 0
+      };
+      return {
+        ...prev,
+        tags: [...prev.tags, newTag]
+      };
+    });
   };
 
   const updateTag = (id: string, updates: Partial<Tag>) => {
@@ -368,7 +457,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showToast,
       viewMode,
       setViewMode,
-      confirm
+      confirm,
+      lang,
+      t
     }}>
       {children}
       
@@ -395,7 +486,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0, scale: 0.9, y: 15 }}
               transition={{ type: "spring", duration: 0.4 }}
               className={cn(
-                "relative w-full max-w-md p-6 rounded-3xl border glass shadow-2xl z-10 transition-colors duration-200 text-right pointer-events-auto",
+                "relative w-full max-w-md p-6 rounded-3xl border glass shadow-2xl z-10 transition-colors duration-200 text-start pointer-events-auto",
                 theme === 'dark'
                   ? "bg-surface-dark/95 border-border-dark text-text-dark"
                   : "bg-white/95 border-border-light text-text-light"
@@ -412,16 +503,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     : "bg-info/10 text-info"
                 )}>
                   {confirmState.type === 'danger' ? (
-                    <XCircle className="w-6 h-6" />
+                     <XCircle className="w-6 h-6" />
                   ) : confirmState.type === 'warning' ? (
-                    <AlertTriangle className="w-6 h-6" />
+                     <AlertTriangle className="w-6 h-6" />
                   ) : (
-                    <Info className="w-6 h-6" />
+                     <Info className="w-6 h-6" />
                   )}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-base font-black leading-snug">
-                    {confirmState.title || "تأكيد الإجراء"}
+                    {confirmState.title || t('common.confirmTitle')}
                   </h3>
                   <p className="text-xs font-bold leading-relaxed opacity-60 mt-1">
                     {confirmState.message}
@@ -443,7 +534,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                       : "bg-surface2-light border-border-light hover:bg-border-light text-muted-light hover:text-text-light"
                   )}
                 >
-                  {confirmState.cancelText || "إلغاء"}
+                  {confirmState.cancelText || t('common.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -459,7 +550,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                       : "bg-info shadow-info/25 hover:bg-info/90"
                   )}
                 >
-                  {confirmState.confirmText || "موافق"}
+                  {confirmState.confirmText || t('common.confirm')}
                 </button>
               </div>
             </motion.div>

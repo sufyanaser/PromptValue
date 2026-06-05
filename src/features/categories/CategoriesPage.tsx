@@ -6,10 +6,10 @@ import { Palette, Plus, Search, MoreVertical, Edit, Trash2 } from 'lucide-react'
 import { cn } from '../../lib/cn';
 import { Button } from '../../components/ui/Button';
 
-const PRESET_COLORS = ['#3B82F6', '#F59E0B', '#EF4444', '#10B981', '#8B5CF6', '#EC4899', '#6366F1'];
+import { getUniqueColor, PRESET_COLORS } from '../../lib/colors';
 
 export function CategoriesPage() {
-  const { data, addCategory, updateCategory, deleteCategory, confirm } = useApp();
+  const { data, addCategory, updateCategory, deleteCategory, confirm, t, lang } = useApp();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -25,7 +25,8 @@ export function CategoriesPage() {
     setEditingId(null);
     setName('');
     setDescription('');
-    setColor('#3B82F6');
+    const uniqueColor = getUniqueColor(data.categories.map(c => c.color));
+    setColor(uniqueColor);
     setIsModalOpen(true);
   };
 
@@ -37,23 +38,30 @@ export function CategoriesPage() {
     setIsModalOpen(true);
   };
 
+  const showToast = (message: string, type: 'success' | 'info' | 'warning' | 'danger') => {
+    const pv = (window as any).PromptVault;
+    // Fallback if needed
+  };
+
   const handleSave = () => {
     if (!name.trim()) return;
     if (editingId) {
       updateCategory(editingId, { name, description, color });
+      showToast(t('categories.successUpdate'), 'success');
     } else {
       addCategory({ name, description, color });
+      showToast(t('categories.successAdd'), 'success');
     }
     setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
     confirm({
-      title: 'حذف التصنيف',
-      message: 'هل أنت متأكد من رغبتك في حذف هذا التصنيف؟ لن يتم حذف البرومبتات ولكن ستصبح بدون تصنيف.',
+      title: t('categories.title'),
+      message: t('common.deleteConfirmMessage'),
       type: 'danger',
-      confirmText: 'حذف',
-      cancelText: 'إلغاء',
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
       onConfirm: () => {
         deleteCategory(id);
       }
@@ -63,12 +71,12 @@ export function CategoriesPage() {
   return (
     <div className="space-y-10">
       <PageHeader
-        title="التصنيفات"
-        subtitle="إدارة وتصنيف البرومبتات لتنظيم المحتوى بسهولة والوصول للمجالات المطلوبة."
+        title={t('categories.title')}
+        subtitle={t('categories.subtitle')}
         actions={
-          <Button onClick={openCreateModal}>
+          <Button onClick={openCreateModal} className="cursor-pointer">
             <Plus className="w-4 h-4 ml-2" />
-            تصنيف جديد
+            {t('categories.newCategory')}
           </Button>
         }
       />
@@ -84,15 +92,15 @@ export function CategoriesPage() {
                         <Palette className="w-5 h-5" style={{ color: cat.color }} />
                      </div>
                      <div className="flex gap-1">
-                        <button onClick={() => openEditModal(cat)} className="p-1.5 opacity-40 hover:opacity-100 text-info transition-opacity"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-1.5 opacity-40 hover:opacity-100 text-danger transition-opacity"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => openEditModal(cat)} className="p-1.5 opacity-40 hover:opacity-100 text-info transition-opacity cursor-pointer"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(cat.id)} className="p-1.5 opacity-40 hover:opacity-100 text-danger transition-opacity cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                      </div>
                   </div>
                   <h3 className="text-lg font-black mb-1">{cat.name}</h3>
                   <p className="text-xs text-muted-light dark:text-muted-dark font-medium mb-4 line-clamp-2 h-8">{cat.description}</p>
                   <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                     <span className="text-[10px] font-black uppercase text-accent">{count} برومبت</span>
-                     <span className="text-[10px] opacity-40 font-bold">{new Date(cat.updatedAt || new Date()).toLocaleDateString('ar-EG')}</span>
+                     <span className="text-[10px] font-black uppercase text-accent">{t('prompts.promptsCount').replace('{count}', count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'))}</span>
+                     <span className="text-[10px] opacity-40 font-bold">{new Date(cat.updatedAt || new Date()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
                   </div>
                 </CardContent>
              </Card>
@@ -101,15 +109,15 @@ export function CategoriesPage() {
       </div>
 
       <Card>
-        <CardHeader title="إدارة التصنيفات" />
+        <CardHeader title={t('categories.title')} />
         <div className="overflow-x-auto">
-           <table className="w-full text-right">
+           <table className="w-full text-start">
               <thead>
                 <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black tracking-widest text-muted-light dark:text-muted-dark border-b border-border/40 uppercase">
-                  <th className="px-6 py-4">الاسم</th>
-                  <th className="px-6 py-4">الوصف</th>
-                  <th className="px-6 py-4">عدد البرومبتات</th>
-                  <th className="px-6 py-4 text-center">الإجراءات</th>
+                  <th className="px-6 py-4">{t('categories.nameLabel')}</th>
+                  <th className="px-6 py-4">{t('categories.descLabel')}</th>
+                  <th className="px-6 py-4">{t('categories.promptCount')}</th>
+                  <th className="px-6 py-4 text-center">{t('categories.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">
@@ -129,8 +137,8 @@ export function CategoriesPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
-                           <button onClick={() => openEditModal(cat)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all"><Edit className="w-4 h-4" /></button>
-                           <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all"><Trash2 className="w-4 h-4" /></button>
+                           <button onClick={() => openEditModal(cat)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all cursor-pointer"><Edit className="w-4 h-4" /></button>
+                           <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -145,36 +153,36 @@ export function CategoriesPage() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card className="w-full max-w-md shadow-2xl border border-border/80 bg-surface-light dark:bg-surface-dark overflow-hidden">
-            <CardHeader title={editingId ? "تعديل التصنيف" : "إضافة تصنيف جديد"} />
+            <CardHeader title={editingId ? t('categories.editCategory') : t('categories.newCategory')} />
             <CardContent className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold opacity-60">اسم التصنيف</label>
+                <label className="text-xs font-bold opacity-60">{t('categories.nameLabel')}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="w-full h-11 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm outline-none focus:border-accent"
-                  placeholder="مثال: ذكاء اصطناعي..."
+                  placeholder={t('categories.categoryNamePlaceholder')}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold opacity-60">الوصف</label>
+                <label className="text-xs font-bold opacity-60">{t('categories.descLabel')}</label>
                 <textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   className="w-full p-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm outline-none focus:border-accent min-h-[80px]"
-                  placeholder="وصف مختصر للتصنيف..."
+                  placeholder={t('categories.categoryDescPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold opacity-60">اللون المختار</label>
-                <div className="flex gap-2">
-                  {PRESET_COLORS.map(c => (
+                <label className="text-xs font-bold opacity-60">{t('categories.createdDate')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {(PRESET_COLORS.includes(color) ? PRESET_COLORS : [...PRESET_COLORS, color]).map(c => (
                     <button
                       key={c}
                       onClick={() => setColor(c)}
                       className={cn(
-                        "w-8 h-8 rounded-full border-2 transition-all",
+                        "w-8 h-8 rounded-full border-2 transition-all cursor-pointer",
                         color === c ? "border-accent scale-110" : "border-transparent"
                       )}
                       style={{ backgroundColor: c }}
@@ -183,8 +191,8 @@ export function CategoriesPage() {
                 </div>
               </div>
               <div className="flex gap-3 pt-4">
-                <Button variant="ghost" className="flex-1" onClick={() => setIsModalOpen(false)}>إلغاء</Button>
-                <Button className="flex-1" onClick={handleSave}>حفظ</Button>
+                <Button variant="ghost" className="flex-1 cursor-pointer" onClick={() => setIsModalOpen(false)}>{t('common.cancel')}</Button>
+                <Button className="flex-1 cursor-pointer" onClick={handleSave}>{t('common.save')}</Button>
               </div>
             </CardContent>
           </Card>

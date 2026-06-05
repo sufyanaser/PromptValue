@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { Import, Download, FileJson, FileText } from 'lucide-react';
 
 export function ImportExportPage() {
-  const { data, updateData, showToast } = useApp();
+  const { data, updateData, showToast, t, lang } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [exportScope, setExportScope] = useState<'all' | 'favorites'>('all');
@@ -20,7 +20,7 @@ export function ImportExportPage() {
 
   const handleImport = () => {
     if (!importFile) {
-      showToast('يرجى اختيار ملف أولاً.', 'warning');
+      showToast(t('importExport.selectFileFirst'), 'warning');
       return;
     }
 
@@ -29,7 +29,7 @@ export function ImportExportPage() {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (!parsed.prompts) {
-          showToast('بنية الملف غير صالحة. يجب أن يحتوي الملف على قائمة البرومبتات.', 'danger');
+          showToast(t('importExport.invalidStructure'), 'danger');
           return;
         }
 
@@ -96,12 +96,12 @@ export function ImportExportPage() {
           tags: newTags
         });
 
-        showToast(`تم استيراد البيانات بنجاح! تم إضافة ${addedCount} برومبت جديد.`, 'success');
+        showToast(t('importExport.importSuccessCount').replace('{count}', addedCount.toString()), 'success');
         setImportFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
       } catch (err) {
         console.error(err);
-        showToast('فشل في قراءة الملف أو تحليله كملف JSON صالح.', 'danger');
+        showToast(t('importExport.importFail'), 'danger');
       }
     };
     reader.readAsText(importFile);
@@ -125,14 +125,14 @@ export function ImportExportPage() {
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
-    showToast('تم تصدير الملف بنجاح!', 'success');
+    showToast(t('importExport.exportSuccess'), 'success');
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <PageHeader
-        title="استيراد وتصدير"
-        subtitle="تحكم في بياناتك بسهولة، انقل مكتبتك من وإلى أي مكان آخر."
+        title={t('importExport.title')}
+        subtitle={t('importExport.subtitle')}
       />
 
       <input 
@@ -145,7 +145,7 @@ export function ImportExportPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
-          <CardHeader title="استيراد البيانات" icon={Import} />
+          <CardHeader title={t('importExport.importCardTitle')} icon={Import} />
           <CardContent className="space-y-6">
             <div 
               onClick={() => fileInputRef.current?.click()}
@@ -153,68 +153,70 @@ export function ImportExportPage() {
             >
                 <FileJson className="w-12 h-12 text-accent opacity-20" />
                 <div className="space-y-1">
-                  <p className="text-sm font-black">{importFile ? importFile.name : 'اضغط لاختيار ملف البيانات'}</p>
-                  <p className="text-[10px] opacity-50 font-bold">يدعم فقط ملفات JSON المصدرة</p>
+                  <p className="text-sm font-black">{importFile ? importFile.name : t('importExport.selectFile')}</p>
+                  <p className="text-[10px] opacity-50 font-bold">{t('importExport.supportedFormat')}</p>
                 </div>
                 <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
-                  {importFile ? 'تغيير الملف' : 'اختيار ملف'}
+                  {importFile ? t('importExport.changeFile') : t('importExport.chooseFile')}
                 </Button>
             </div>
             
             <div className="space-y-3">
-               <h4 className="text-xs font-black opacity-50 px-1">خيارات الاستيراد</h4>
+               <h4 className="text-xs font-black opacity-50 px-1">{t('importExport.importOptions')}</h4>
                <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 bg-surface2-light dark:bg-surface2-dark/40 rounded-xl text-xs font-bold">
-                     <span>تخطي البرومبتات المكررة (عبر العنوان)</span>
+                     <span>{t('importExport.skipDuplicates')}</span>
                      <div className="w-4 h-4 rounded-full border border-accent bg-accent/10 flex items-center justify-center">
                        <div className="w-2 h-2 bg-accent rounded-full" />
                      </div>
                   </div>
                </div>
             </div>
-            <Button onClick={handleImport} className="w-full" disabled={!importFile}>بدء عملية الاستيراد</Button>
+            <Button onClick={handleImport} className="w-full" disabled={!importFile}>{t('importExport.startImport')}</Button>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader title="تصدير البيانات" icon={Download} />
+          <CardHeader title={t('importExport.exportCardTitle')} icon={Download} />
           <CardContent className="space-y-6">
             <div className="space-y-4">
-               <h4 className="text-xs font-black opacity-50 px-1">نطاق التصدير</h4>
+               <h4 className="text-xs font-black opacity-50 px-1">{t('importExport.exportScope')}</h4>
                <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => setExportScope('all')}
                     className={`p-3 text-xs font-bold rounded-xl border transition-all ${exportScope === 'all' ? 'border-accent bg-accent/5 text-accent' : 'border-transparent bg-surface2-light dark:bg-surface2-dark'}`}
                   >
-                     جميع البيانات
+                     {t('importExport.allData')}
                   </button>
                   <button 
                     onClick={() => setExportScope('favorites')}
                     className={`p-3 text-xs font-bold rounded-xl border transition-all ${exportScope === 'favorites' ? 'border-accent bg-accent/5 text-accent' : 'border-transparent bg-surface2-light dark:bg-surface2-dark'}`}
                   >
-                     المفضلة فقط
+                     {t('importExport.onlyFavorites')}
                   </button>
                </div>
             </div>
 
             <div className="space-y-4">
-               <h4 className="text-xs font-black opacity-50 px-1">صيغة الملف</h4>
+               <h4 className="text-xs font-black opacity-50 px-1">{t('importExport.fileFormat')}</h4>
                <div className="grid grid-cols-1 gap-2">
-                  <button className="flex items-center gap-3 p-4 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-accent text-accent">
+                  <button className="flex items-center gap-3 p-4 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-accent text-accent w-full text-start">
                      <FileJson className="w-6 h-6 opacity-60" />
-                     <div className="text-right">
+                     <div className="text-start">
                        <span className="text-xs font-black block">JSON Format</span>
-                       <span className="text-[9px] opacity-60">تصدير كامل البيانات مدمجة للاستعادة لاحقاً</span>
+                       <span className="text-[9px] opacity-60">{t('importExport.jsonFormatDesc')}</span>
                      </div>
                   </button>
                </div>
             </div>
             
             <div className="p-4 bg-accent/5 border border-accent/20 rounded-2xl">
-               <p className="text-[10px] leading-relaxed opacity-60 font-medium">سيتم تصدير {exportScope === 'favorites' ? data.prompts.filter(p => p.isFavorite).length : data.prompts.length} برومبت مع كامل التصنيفات والوسوم الخاصة بها.</p>
+               <p className="text-[10px] leading-relaxed opacity-60 font-medium">
+                 {t('importExport.exportWarning').replace('{count}', (exportScope === 'favorites' ? data.prompts.filter(p => p.isFavorite).length : data.prompts.length).toString())}
+               </p>
             </div>
 
-            <Button onClick={handleExport} className="w-full" variant="success">تصدير الملف المختار</Button>
+            <Button onClick={handleExport} className="w-full" variant="success">{t('importExport.exportSelectedBtn')}</Button>
           </CardContent>
         </Card>
       </div>

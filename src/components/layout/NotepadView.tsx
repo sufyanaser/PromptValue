@@ -45,7 +45,7 @@ const HIGHLIGHT_COLORS = [
 ];
 
 export function NotepadView() {
-  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm, setViewMode: setAppViewMode } = useApp();
+  const { data, updatePrompt, addPrompt, toggleFavorite, addTag, deletePrompt, showToast, confirm, setViewMode: setAppViewMode, t, lang } = useApp();
   const navigate = useNavigate();
   
   // Folders State loaded from local storage
@@ -112,7 +112,7 @@ export function NotepadView() {
   };
 
   const insertLink = () => {
-    const url = prompt('أدخل الرابط:');
+    const url = prompt(t('editor.promptInsertLink'));
     if (url) {
       execFormat('createLink', url);
     }
@@ -174,7 +174,7 @@ export function NotepadView() {
         if (selectedPromptId) {
           updatePrompt(selectedPromptId, { content: text });
         }
-        showToast('تم تحسين البرومبت بنجاح!', 'success');
+        showToast(t('editor.successEnhance'), 'success');
       }
     }, 20);
   };
@@ -183,7 +183,7 @@ export function NotepadView() {
     if (!selectedPrompt) return;
     const textToImprove = getTextFromHtml(selectedPrompt.content);
     if (!textToImprove.trim()) {
-      showToast('يرجى كتابة نص البرومبت أولاً ليتمكن المساعد من تحسينه.', 'warning');
+      showToast(t('editor.writePromptFirst'), 'warning');
       return;
     }
 
@@ -228,7 +228,7 @@ ${textToImprove}`;
       }
     } catch (error: any) {
       console.error(error);
-      showToast(`فشل التحسين: ${error.message || 'حدث خطأ غير معروف'}`, 'danger');
+      showToast(`${t('editor.enhanceFailed')}${error.message || (lang === 'ar' ? 'حدث خطأ غير معروف' : 'An unknown error occurred')}`, 'danger');
     } finally {
       setAiEnhancing(false);
       setAiEnhancingProvider(null);
@@ -415,7 +415,7 @@ ${textToImprove}`;
               editorRef.current?.focus();
               document.execCommand('insertImage', false, base64Url);
               handleEditorInput();
-              showToast('تم لصق الصورة وإدراجها بنجاح', 'success');
+              showToast(lang === 'ar' ? 'تم لصق الصورة وإدراجها بنجاح' : 'Image pasted and inserted successfully', 'success');
             }
           };
           reader.readAsDataURL(file);
@@ -448,17 +448,17 @@ ${textToImprove}`;
     const newPromptTag = targetFolder ? targetFolder.tag : 'general';
     
     const newPromptData = {
-      title: 'برومبت جديد غير معنون',
-      description: 'تم إنشاؤه عبر المفكرة',
-      content: 'اكتب نص البرومبت هنا...',
+      title: lang === 'ar' ? 'برومبت جديد غير معنون' : 'New Untitled Prompt',
+      description: lang === 'ar' ? 'تم إنشاؤه عبر المفكرة' : 'Created via Notepad',
+      content: lang === 'ar' ? 'اكتب نص البرومبت هنا...' : 'Write the prompt text here...',
       categoryId: data.categories[0]?.id || '',
       tags: [newPromptTag],
       variables: [],
       status: 'active' as const,
       isFavorite: false,
       usageCount: 0,
-      author: 'أحمد النعيمي',
-      source: 'المفكرة الشخصية'
+      author: lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi',
+      source: lang === 'ar' ? 'المفكرة الشخصية' : 'Personal Notepad'
     };
 
     addPrompt(newPromptData);
@@ -531,11 +531,11 @@ ${textToImprove}`;
       
       {/* Left Column: Folders Sidebar */}
       <div className={cn(
-        "h-full flex flex-col border-l border-border/40 bg-surface-light dark:bg-surface-dark transition-all duration-300 shrink-0",
-        isSidebarCollapsed ? "w-0 border-l-0 overflow-hidden" : "w-[280px]"
+        "h-full flex flex-col border-e border-border/40 bg-surface-light dark:bg-surface-dark transition-all duration-300 shrink-0",
+        isSidebarCollapsed ? "w-0 border-e-0 overflow-hidden" : "w-[280px]"
       )}>
         <div className="p-4 border-b border-border/40 flex items-center justify-between gap-2 shrink-0">
-          <span className="text-[10px] font-black opacity-60 truncate">مجلدات المفكرة</span>
+          <span className="text-[10px] font-black opacity-60 truncate">{lang === 'ar' ? 'مجلدات المفكرة' : 'Notepad Folders'}</span>
           <div className="flex gap-1">
             <Button 
               size="sm" 
@@ -544,7 +544,7 @@ ${textToImprove}`;
               onClick={handleAddFolder}
             >
               <Plus className="w-3 h-3" />
-              مجلد
+              {lang === 'ar' ? 'مجلد' : 'Folder'}
             </Button>
             <Button 
               size="sm" 
@@ -553,7 +553,7 @@ ${textToImprove}`;
               onClick={() => handleCreatePromptInFolder(activeFolderId)}
             >
               <Plus className="w-3 h-3" />
-              برومبت
+              {lang === 'ar' ? 'برومبت' : 'Prompt'}
             </Button>
           </div>
         </div>
@@ -581,7 +581,9 @@ ${textToImprove}`;
                     ) : (
                       <Folder className="w-4 h-4 shrink-0" style={{ color: folder.color }} />
                     )}
-                    <span className="text-slate-700 dark:text-slate-200 truncate pr-1">{folder.name}</span>
+                    <span className="text-slate-700 dark:text-slate-200 truncate pe-1">
+                      {folder.id === 'other' ? (lang === 'ar' ? 'برومبتات عامة' : 'General Prompts') : folder.name}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <span className="text-[9px] font-black opacity-45 px-1.5 py-0.5 rounded bg-border/20">{promptsInFolder.length}</span>
@@ -592,7 +594,7 @@ ${textToImprove}`;
                       <span
                         onClick={(e) => startEditFolder(folder, e)}
                         className="opacity-0 group-hover/folder:opacity-100 p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-800 transition-opacity cursor-pointer text-slate-500 dark:text-slate-400"
-                        title="تخصيص المجلد"
+                        title={lang === 'ar' ? 'تخصيص المجلد' : 'Customize Folder'}
                       >
                         <Sliders className="w-3.5 h-3.5" />
                       </span>
@@ -602,7 +604,7 @@ ${textToImprove}`;
 
                 {/* Folder Prompts List */}
                 {isExpanded && (
-                  <div className="mr-4 pr-2 border-r border-border/30 space-y-0.5">
+                  <div className="ms-4 ps-2 border-s border-border/30 space-y-0.5">
                     {promptsInFolder.map(p => {
                       const isSelected = p.id === selectedPromptId;
                       const isRenaming = renamingPromptId === p.id;
@@ -611,7 +613,7 @@ ${textToImprove}`;
                         <div
                           key={p.id}
                           className={cn(
-                            "w-full group/item flex items-center justify-between py-1.5 px-2 rounded-lg text-[11px] font-bold text-right transition-all cursor-pointer relative",
+                            "w-full group/item flex items-center justify-between py-1.5 px-2 rounded-lg text-[11px] font-bold text-start transition-all cursor-pointer relative",
                             isSelected 
                               ? "bg-accent/10 text-accent font-black" 
                               : "text-muted-light dark:text-muted-dark hover:bg-surface2-light dark:hover:bg-surface2-dark"
@@ -622,7 +624,7 @@ ${textToImprove}`;
                             setPromptRenameTitle(p.title);
                           }}
                         >
-                          <div className="flex items-center gap-2 flex-1 min-w-0 pr-1">
+                          <div className="flex items-center gap-2 flex-1 min-w-0 pe-1">
                             <FileText className="w-3.5 h-3.5 opacity-55 shrink-0" />
                             {isRenaming ? (
                               <input
@@ -650,8 +652,8 @@ ${textToImprove}`;
                                 e.stopPropagation();
                                 handleDeletePrompt(p.id);
                               }}
-                              className="opacity-0 group-hover/item:opacity-100 p-1 rounded hover:bg-danger/10 text-danger transition-opacity shrink-0 cursor-pointer ml-1"
-                              title="حذف البرومبت"
+                              className="opacity-0 group-hover/item:opacity-100 p-1 rounded hover:bg-danger/10 text-danger transition-opacity shrink-0 cursor-pointer ms-1"
+                              title={t('notepad.deleteTooltip')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </span>
@@ -660,7 +662,7 @@ ${textToImprove}`;
                       );
                     })}
                     {promptsInFolder.length === 0 && (
-                      <p className="text-[10px] opacity-40 italic py-1.5 pr-2">مجلد فارغ...</p>
+                      <p className="text-[10px] opacity-40 italic py-1.5 pe-2">{lang === 'ar' ? 'مجلد فارغ...' : 'Empty folder...'}</p>
                     )}
                   </div>
                 )}
@@ -679,7 +681,7 @@ ${textToImprove}`;
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-surface2-dark hover:bg-slate-100 dark:hover:bg-surface2-dark/80 border border-border/30 rounded-xl text-xs font-bold hover:text-accent hover:border-accent/30 shadow-xs hover:shadow-sm transition-all duration-300 cursor-pointer text-slate-600 dark:text-slate-300"
           >
             <Sliders className="w-3.5 h-3.5 text-accent" />
-            <span>الإعدادات السريعة</span>
+            <span>{lang === 'ar' ? 'الإعدادات السريعة' : 'Quick Settings'}</span>
           </button>
         </div>
       </div>
@@ -690,13 +692,16 @@ ${textToImprove}`;
         <button
           type="button"
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="absolute right-[-12px] top-1/2 -translate-y-1/2 w-6.5 h-6.5 bg-white dark:bg-surface-dark border border-border/30 hover:border-accent/40 rounded-full flex items-center justify-center shadow-md z-40 cursor-pointer text-slate-500 hover:text-accent transition-all duration-300 hover:scale-110"
-          title={isSidebarCollapsed ? "عرض المجلدات" : "إخفاء المجلدات"}
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 w-6.5 h-6.5 bg-white dark:bg-surface-dark border border-border/30 hover:border-accent/40 rounded-full flex items-center justify-center shadow-md z-40 cursor-pointer text-slate-500 hover:text-accent transition-all duration-300 hover:scale-110",
+            lang === 'ar' ? "right-[-12px]" : "left-[-12px]"
+          )}
+          title={isSidebarCollapsed ? (lang === 'ar' ? 'عرض المجلدات' : 'Show Folders') : (lang === 'ar' ? 'إخفاء المجلدات' : 'Hide Folders')}
         >
           {isSidebarCollapsed ? (
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
           ) : (
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
           )}
         </button>
         {selectedPrompt ? (
@@ -722,7 +727,7 @@ ${textToImprove}`;
                          borderColor: isActive ? 'transparent' : folder.color + '30'
                        }}
                        className={cn(
-                         "h-8 pl-8 pr-4 rounded-t-lg text-[10px] font-black flex items-center gap-2 transition-all cursor-pointer relative z-10 border border-b-0",
+                         "h-8 ps-4 pe-8 rounded-t-lg text-[10px] font-black flex items-center gap-2 transition-all cursor-pointer relative z-10 border border-b-0",
                          isActive 
                            ? "shadow-sm" 
                            : "hover:bg-surface-light/80 dark:hover:bg-surface-dark/80"
@@ -735,7 +740,8 @@ ${textToImprove}`;
                     <button
                       onClick={(e) => closeTab(tId, e)}
                       className={cn(
-                        "absolute left-2 top-1/2 -translate-y-1/2 z-20 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer",
+                        "absolute top-1/2 -translate-y-1/2 z-20 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer",
+                        lang === 'ar' ? "left-2" : "right-2",
                         isActive ? "text-white/80 hover:text-white" : "text-muted-light/60 hover:text-muted-light"
                       )}
                     >
@@ -763,7 +769,7 @@ ${textToImprove}`;
                 {/* Mock Image Icon */}
                 <button 
                   onClick={handleImageToolbarClick} 
-                  title="رفع صورة وإدراجها" 
+                  title={t('editor.tooltipImage')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
                 >
                   <Image className="w-4 h-4 opacity-70" />
@@ -774,14 +780,14 @@ ${textToImprove}`;
                 {/* Undo / Redo */}
                 <button 
                   onClick={handleUndo} 
-                  title="تراجع" 
+                  title={t('editor.tooltipUndo')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
                 >
                   <Undo className="w-4 h-4 opacity-70" />
                 </button>
                 <button 
                   onClick={handleRedo} 
-                  title="إعادة" 
+                  title={t('editor.tooltipRedo')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
                 >
                   <Redo className="w-4 h-4 opacity-70" />
@@ -795,9 +801,9 @@ ${textToImprove}`;
                   onChange={e => setFontFamily(e.target.value)}
                   className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer"
                 >
-                  <option value="font-sans">IBM Plex Sans (عادي)</option>
-                  <option value="font-mono">Monospace (كود)</option>
-                  <option value="font-serif">Serif (كلاسيك)</option>
+                  <option value="font-sans">{t('editor.fontSans')}</option>
+                  <option value="font-mono">{t('editor.fontMono')}</option>
+                  <option value="font-serif">{t('editor.fontSerif')}</option>
                 </select>
 
                 {/* Font Size selector */}
@@ -823,29 +829,29 @@ ${textToImprove}`;
                       setIsHighlighterDropdownOpen(false);
                       setIsHeaderDropdownOpen(false);
                     }}
-                    title="لون الخط" 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5"
+                    title={t('editor.tooltipColor')} 
+                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
                   >
                     <Palette className="w-4 h-4 opacity-70 text-accent" />
                   </button>
                   {isPenDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
                       {PEN_COLORS.map((color, idx) => (
                         <button 
                           key={idx}
                           onClick={() => insertColorText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer"
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
                         >
                           <span className={cn("w-3 h-3 rounded-full shrink-0", color.class)} />
-                          <span>{color.name}</span>
+                          <span>{t(`editor.color${color.name}`)}</span>
                         </button>
                       ))}
                       <button 
                         onClick={() => insertColorText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer"
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
                       >
                         <span className="w-3 h-3 rounded-full shrink-0 bg-transparent border border-border" />
-                        <span>مسح التنسيق</span>
+                        <span>{t('editor.clearFormat')}</span>
                       </button>
                     </div>
                   )}
@@ -859,29 +865,29 @@ ${textToImprove}`;
                       setIsPenDropdownOpen(false);
                       setIsHeaderDropdownOpen(false);
                     }}
-                    title="تمييز النص" 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5"
+                    title={t('editor.tooltipHighlight')} 
+                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
                   >
                     <Highlighter className="w-4 h-4 opacity-70 text-warning" />
                   </button>
                   {isHighlighterDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
                       {HIGHLIGHT_COLORS.map((color, idx) => (
                         <button 
                           key={idx}
                           onClick={() => insertHighlightText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer"
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
                         >
                           <span className={cn("w-3 h-3 rounded shrink-0", color.class)} />
-                          <span>{color.name}</span>
+                          <span>{t(`editor.highlight${color.name}`)}</span>
                         </button>
                       ))}
                       <button 
                         onClick={() => insertHighlightText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer"
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
                       >
                         <span className="w-3 h-3 rounded shrink-0 bg-transparent border border-border" />
-                        <span>مسح التمييز</span>
+                        <span>{t('editor.clearHighlight')}</span>
                       </button>
                     </div>
                   )}
@@ -900,17 +906,17 @@ ${textToImprove}`;
                     className="h-8 px-2.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer"
                   >
                     <Heading className="w-3.5 h-3.5 text-accent" />
-                    <span>العناوين</span>
+                    <span>{t('editor.headings')}</span>
                   </button>
                   {isHeaderDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
                       {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
                         <button 
                           key={idx}
                           onClick={() => insertHeader(tag)}
-                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-right cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
                         >
-                          عنوان H{idx + 1}
+                          {t('editor.heading')} H{idx + 1}
                         </button>
                       ))}
                     </div>
@@ -924,28 +930,28 @@ ${textToImprove}`;
                   <button 
                     onClick={() => handleAlignmentChange('right')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة لليمين"
+                    title={t('editor.tooltipAlignRight')}
                   >
                     <AlignRight className="w-3.5 h-3.5" />
                   </button>
                   <button 
                     onClick={() => handleAlignmentChange('center')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة للوسط"
+                    title={t('editor.tooltipAlignCenter')}
                   >
                     <AlignCenter className="w-3.5 h-3.5" />
                   </button>
                   <button 
                     onClick={() => handleAlignmentChange('left')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة لليصار"
+                    title={t('editor.tooltipAlignLeft')}
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
                   </button>
                   <button 
                     onClick={() => handleAlignmentChange('justify')}
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="ضبط النص"
+                    title={t('editor.tooltipAlignJustify')}
                   >
                     <AlignJustify className="w-3.5 h-3.5" />
                   </button>
@@ -954,12 +960,12 @@ ${textToImprove}`;
                 <div className="w-[1px] h-5 bg-border mx-1" />
 
                 {/* Formatting Helpers */}
-                <button onClick={() => execFormat('bold')} title="عريض" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('italic')} title="مائل" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('insertUnorderedList')} title="قائمة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><List className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('formatBlock', '<pre>')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Code className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={insertLink} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={handleImageToolbarClick} title="صورة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Image className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('bold')} title={t('editor.tooltipBold')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('italic')} title={t('editor.tooltipItalic')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('insertUnorderedList')} title={t('editor.tooltipList')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={() => execFormat('formatBlock', '<pre>')} title={t('editor.tooltipCode')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={insertLink} title={t('editor.tooltipLink')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={handleImageToolbarClick} title={t('editor.tooltipImage')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Image className="w-3.5 h-3.5 opacity-60" /></button>
 
               </div>
 
@@ -974,7 +980,7 @@ ${textToImprove}`;
                     )}
                   >
                     <Edit className="w-3.5 h-3.5" />
-                    تحرير
+                    {t('notepad.editMode')}
                   </button>
                   <button
                     onClick={() => setViewMode('preview')}
@@ -984,7 +990,7 @@ ${textToImprove}`;
                     )}
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    معاينة
+                    {t('notepad.previewMode')}
                   </button>
                 </div>
                 {hasAnyAi && (
@@ -1060,7 +1066,7 @@ ${textToImprove}`;
                 value={selectedPrompt.title}
                 onChange={e => handleTitleChange(e.target.value)}
                 className="w-full bg-transparent border-none outline-none text-2xl font-black text-slate-800 dark:text-slate-100 placeholder-slate-400 py-2 border-b border-border/10 focus:border-accent/30 transition-all"
-                placeholder="عنوان الملاحظة..."
+                placeholder={t('notepad.titlePlaceholder')}
               />
 
               {/* Text Editor content */}
@@ -1080,12 +1086,12 @@ ${textToImprove}`;
                     onInput={handleEditorInput}
                     onPaste={handlePaste}
                     className={cn(
-                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[150px] text-right focus:outline-none overflow-y-auto",
+                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[150px] text-start focus:outline-none overflow-y-auto",
                       fontFamily,
                       fontSize
                     )}
-                    style={{ direction: 'rtl' }}
-                    {...{ placeholder: "اكتب البرومبت هنا..." }}
+                    style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
+                    {...{ placeholder: t('notepad.contentPlaceholder') }}
                   />
                   <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between flex-wrap gap-2 select-none">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -1105,14 +1111,14 @@ ${textToImprove}`;
                                   ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
                                   : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
                               )}
-                              title="تحسين صياغة البرومبت عبر Gemini"
+                              title={t('editor.enhanceGemini')}
                             >
                               <Sparkles className={cn("w-3 h-3", aiEnhancingProvider === 'gemini' && "animate-spin")} />
                               <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                                 <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                               </span>
                               <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                Gemini جاهز ومفعّل
+                                {t('editor.geminiReady')}
                               </span>
                             </button>
                           )}
@@ -1127,14 +1133,14 @@ ${textToImprove}`;
                                   ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
                                   : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
                               )}
-                              title="تحسين صياغة البرومبت عبر OpenAI"
+                              title={t('editor.enhanceOpenAI')}
                             >
                               <Cpu className={cn("w-3 h-3", aiEnhancingProvider === 'openai' && "animate-spin")} />
                               <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                                 <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                               </span>
                               <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                OpenAI جاهز ومفعّل
+                                {t('editor.openaiReady')}
                               </span>
                             </button>
                           )}
@@ -1149,21 +1155,21 @@ ${textToImprove}`;
                                   ? "bg-orange-500 text-white border-orange-600 shadow-sm"
                                   : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
                               )}
-                              title="تحسين صياغة البرومبت عبر Claude"
+                              title={t('editor.enhanceClaude')}
                             >
                               <Brain className={cn("w-3 h-3", aiEnhancingProvider === 'claude' && "animate-spin")} />
                               <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                                 <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                               </span>
                               <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                Claude جاهز ومفعّل
+                                {t('editor.claudeReady')}
                               </span>
                             </button>
                           )}
                         </div>
                       )}
                     </div>
-                    <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> تم الحفظ تلقائياً في المتصفح</span>
+                    <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> {t('notepad.promptAutoSaved')}</span>
                   </div>
 
                   {/* AI Loading/Generating Overlay */}
@@ -1176,7 +1182,7 @@ ${textToImprove}`;
                         aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
                       )}>
                         <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                        <span className="text-xs font-black">جاري تحسين الصياغة بالذكاء الاصطناعي...</span>
+                        <span className="text-xs font-black">{t('editor.aiEnhancing')}</span>
                       </div>
                     </div>
                   )}
@@ -1186,9 +1192,9 @@ ${textToImprove}`;
                   "flex-1 prose prose-sm dark:prose-invert max-w-none leading-loose",
                   fontFamily,
                   fontSize,
-                  alignment === 'center' ? 'text-center' : alignment === 'left' ? 'text-left' : alignment === 'justify' ? 'text-justify' : 'text-right'
+                  alignment === 'center' ? 'text-center' : alignment === 'left' ? 'text-left' : alignment === 'justify' ? 'text-justify' : 'text-start'
                 )}>
-                  <Markdown rehypePlugins={[rehypeRaw]}>{selectedPrompt.content || '_لا توجد نصوص للمعاينة..._'}</Markdown>
+                  <Markdown rehypePlugins={[rehypeRaw]}>{selectedPrompt.content || (lang === 'ar' ? '_لا توجد نصوص للمعاينة..._' : '_No text to preview..._')}</Markdown>
                 </div>
               )}
 
@@ -1198,9 +1204,9 @@ ${textToImprove}`;
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center select-none py-20">
             <FileText className="w-16 h-16 text-accent opacity-20" />
-            <h3 className="text-base font-black">المفكرة فارغة</h3>
-            <p className="text-xs font-medium opacity-50 max-w-xs leading-relaxed">اختر برومبت من القائمة الجانبية أو اضغط على زر "جديد" لإنشاء برومبت في مجلدك.</p>
-            <Button onClick={() => handleCreatePromptInFolder('gemini')}>إنشاء برومبت جديد</Button>
+            <h3 className="text-base font-black">{lang === 'ar' ? 'المفكرة فارغة' : 'Notepad is empty'}</h3>
+            <p className="text-xs font-medium opacity-50 max-w-xs leading-relaxed">{lang === 'ar' ? 'اختر برومبت من القائمة الجانبية أو اضغط على زر "جديد" لإنشاء برومبت في مجلدك.' : 'Select a prompt from the sidebar or click "New" to create a prompt in your folder.'}</p>
+            <Button onClick={() => handleCreatePromptInFolder('gemini')}>{t('notepad.newPromptBtn')}</Button>
           </div>
         )}
       </div>
@@ -1208,24 +1214,24 @@ ${textToImprove}`;
       {/* Folder Customization Modal */}
       {editingFolder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 select-none">
-          <Card className="w-full max-w-md shadow-2xl border border-border/80 bg-surface-light dark:bg-surface-dark overflow-hidden text-right pointer-events-auto">
-            <CardHeader title="تخصيص المجلد" />
+          <Card className={cn("w-full max-w-md shadow-2xl border border-border/80 bg-surface-light dark:bg-surface-dark overflow-hidden pointer-events-auto", lang === 'ar' ? "text-right" : "text-start")}>
+            <CardHeader title={lang === 'ar' ? 'تخصيص المجلد' : 'Customize Folder'} />
             <CardContent className="space-y-4 pt-4">
               {/* Folder Name */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold opacity-60">اسم المجلد</label>
+              <div className="space-y-1 text-start">
+                <label className="text-xs font-bold opacity-60">{lang === 'ar' ? 'اسم المجلد' : 'Folder Name'}</label>
                 <input
                   type="text"
                   value={folderEditName}
                   onChange={e => setFolderEditName(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm outline-none focus:border-accent text-slate-800 dark:text-slate-100"
-                  placeholder="مثال: برومبتات البرمجة..."
+                  className="w-full h-11 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm outline-none focus:border-accent text-slate-800 dark:text-slate-100 text-start"
+                  placeholder={lang === 'ar' ? 'مثال: برومبتات البرمجة...' : 'e.g. Coding Prompts...'}
                 />
               </div>
 
               {/* Folder Color */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold opacity-60">اللون المختار</label>
+              <div className="space-y-2 text-start">
+                <label className="text-xs font-bold opacity-60">{lang === 'ar' ? 'اللون المختار' : 'Selected Color'}</label>
                 <div className="flex flex-wrap gap-2">
                   {['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899', '#6B7280'].map(c => (
                     <button
@@ -1249,8 +1255,8 @@ ${textToImprove}`;
               </div>
 
               {/* Folder Icon Upload */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold opacity-60 block">أيقونة المجلد</label>
+              <div className="space-y-2 text-start">
+                <label className="text-xs font-bold opacity-60 block">{lang === 'ar' ? 'أيقونة المجلد' : 'Folder Icon'}</label>
                 <div className="flex items-center gap-3 bg-surface2-light dark:bg-surface2-dark p-3 rounded-xl border border-border/30">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-border/50 bg-white dark:bg-surface-dark shrink-0">
                     {folderEditIcon ? (
@@ -1274,7 +1280,7 @@ ${textToImprove}`;
                         className="h-8 text-[10px] font-bold cursor-pointer"
                         onClick={() => document.getElementById('folder-icon-uploader')?.click()}
                       >
-                        رفع صورة
+                        {lang === 'ar' ? 'رفع صورة' : 'Upload Image'}
                       </Button>
                       {folderEditIcon && (
                         <Button
@@ -1283,19 +1289,19 @@ ${textToImprove}`;
                           className="h-8 text-[10px] font-bold text-danger hover:bg-danger/10 cursor-pointer"
                           onClick={() => setFolderEditIcon('')}
                         >
-                          مسح الأيقونة
+                          {lang === 'ar' ? 'مسح الأيقونة' : 'Clear Icon'}
                         </Button>
                       )}
                     </div>
-                    <span className="text-[9px] opacity-45 font-bold">يمكنك اختيار أي صورة لتكون أيقونة المجلد.</span>
+                    <span className="text-[9px] opacity-45 font-bold">{lang === 'ar' ? 'يمكنك اختيار أي صورة لتكون أيقونة المجلد.' : 'You can choose any image to be the folder icon.'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Modal Actions */}
               <div className="flex gap-3 pt-4">
-                <Button variant="ghost" className="flex-1 text-xs font-bold" onClick={() => setEditingFolder(null)}>إلغاء</Button>
-                <Button className="flex-1 bg-accent text-white text-xs font-bold shadow-lg shadow-accent/15" onClick={saveFolderEdits}>حفظ التغييرات</Button>
+                <Button variant="ghost" className="flex-1 text-xs font-bold" onClick={() => setEditingFolder(null)}>{t('common.cancel')}</Button>
+                <Button className="flex-1 bg-accent text-white text-xs font-bold shadow-lg shadow-accent/15" onClick={saveFolderEdits}>{t('categories.saveBtn')}</Button>
               </div>
             </CardContent>
           </Card>

@@ -5,7 +5,7 @@ import { useApp } from '../../app/app-provider';
 import { Link } from 'react-router-dom';
 
 export function Header() {
-  const { theme, setTheme, viewMode, setViewMode } = useApp();
+  const { theme, setTheme, viewMode, setViewMode, t } = useApp();
 
   return (
     <header className={cn(
@@ -19,31 +19,31 @@ export function Header() {
           </div>
           <div className="flex flex-col">
             <h1 className="text-lg font-black tracking-tight leading-none">PromptVault</h1>
-            <span className="text-[10px] uppercase font-bold text-accent tracking-[2px]">منصة إدارة البرومبتات</span>
+            <span className="text-[10px] uppercase font-bold text-accent tracking-[2px]">{t('common.appSub')}</span>
           </div>
         </div>
 
         <div className="relative flex-1 max-w-xl group">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-light/60 group-focus-within:text-accent transition-colors" />
+          <Search className="absolute end-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-light/60 group-focus-within:text-accent transition-colors" />
           <input
             type="text"
-            placeholder="البحث في العنوان، النص، الوسوم، التصنيف، والملاحظات..."
+            placeholder={t('common.searchPlaceholder')}
             className={cn(
-              "w-full h-11 pr-11 pl-12 rounded-xl text-sm transition-all border outline-none",
+              "w-full h-11 pe-11 ps-12 rounded-xl text-sm transition-all border outline-none",
               theme === 'dark'
                 ? "bg-surface2-dark border-border-dark focus:border-accent text-text-dark"
                 : "bg-surface2-light border-border-light focus:border-accent text-text-light"
             )}
           />
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-border/50 text-[10px] font-mono opacity-50">
-            Ctrl+K
+          <div className="absolute start-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded border border-border/50 text-[10px] font-mono opacity-50">
+            {t('common.ctrlK')}
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         {/* View Mode Toggle Buttons */}
-        <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 gap-1 ml-4 select-none">
+        <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 gap-1 ms-4 select-none">
           <button
             onClick={() => setViewMode('detailed')}
             className={cn(
@@ -54,7 +54,7 @@ export function Header() {
             )}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>الوضع الاحترافي</span>
+            <span>{t('header.proMode')}</span>
           </button>
           <button
             onClick={() => setViewMode('notepad')}
@@ -66,7 +66,7 @@ export function Header() {
             )}
           >
             <Notebook className="w-3.5 h-3.5" />
-            <span>وضع المفكرة</span>
+            <span>{t('header.notepadMode')}</span>
           </button>
         </div>
 
@@ -84,7 +84,7 @@ export function Header() {
           className="flex items-center gap-2 px-5 h-11 bg-accent text-white font-bold rounded-xl shadow-lg shadow-accent/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           <Plus className="w-5 h-5" />
-          <span>برومبت جديد</span>
+          <span>{t('common.newPrompt')}</span>
         </Link>
       </div>
     </header>

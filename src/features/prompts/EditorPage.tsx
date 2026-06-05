@@ -21,7 +21,7 @@ import rehypeRaw from 'rehype-raw';
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, addPrompt, updatePrompt, showToast } = useApp();
+  const { data, addPrompt, updatePrompt, showToast, t, lang } = useApp();
   const [aiEnhancing, setAiEnhancing] = useState(false);
   const [aiEnhancingProvider, setAiEnhancingProvider] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export function EditorPage() {
           editorRef.current.innerHTML = text;
         }
         setFormData(prev => ({ ...prev, content: text }));
-        showToast('تم تحسين البرومبت بنجاح!', 'success');
+        showToast(t('editor.successEnhance'), 'success');
       }
     }, 20);
   };
@@ -61,7 +61,7 @@ export function EditorPage() {
   const handleAiEnhance = async (provider: 'gemini' | 'openai' | 'claude') => {
     const textToImprove = getTextFromHtml(formData.content);
     if (!textToImprove.trim()) {
-      showToast('يرجى كتابة نص البرومبت أولاً ليتمكن المساعد من تحسينه.', 'warning');
+      showToast(t('editor.writePromptFirst'), 'warning');
       return;
     }
 
@@ -106,7 +106,7 @@ ${textToImprove}`;
       }
     } catch (error: any) {
       console.error(error);
-      showToast(`فشل التحسين: ${error.message || 'حدث خطأ غير معروف'}`, 'danger');
+      showToast(`${t('editor.enhanceFailed')}${error.message || (lang === 'ar' ? 'حدث خطأ غير معروف' : 'An unknown error occurred')}`, 'danger');
     } finally {
       setAiEnhancing(false);
       setAiEnhancingProvider(null);
@@ -121,13 +121,13 @@ ${textToImprove}`;
     notes: existingPrompt?.notes || '',
     tags: existingPrompt?.tags.join(', ') || '',
     status: existingPrompt?.status || 'active',
-    author: existingPrompt?.author || 'أحمد النعيمي',
-    source: existingPrompt?.source || 'مكتبة الفريق',
+    author: existingPrompt?.author || (lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi'),
+    source: existingPrompt?.source || (lang === 'ar' ? 'مكتبة الفريق' : 'Team Library'),
   });
 
   const [isSaved, setIsSaved] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
-  const [autoSavedTime, setAutoSavedTime] = useState<string>('منذ ثوان');
+  const [autoSavedTime, setAutoSavedTime] = useState<string>('');
 
   // Font/Size/Alignment states
   const [fontFamily, setFontFamily] = useState<string>('font-sans');
@@ -163,7 +163,7 @@ ${textToImprove}`;
   const handleRedo = () => execFormat('redo');
 
   const insertLink = () => {
-    const url = prompt('أدخل الرابط:');
+    const url = prompt(t('editor.promptInsertLink'));
     if (url) {
       execFormat('createLink', url);
     }
@@ -257,7 +257,7 @@ ${textToImprove}`;
 
   const handleSave = () => {
     const promptData = {
-      title: formData.title || 'بدون عنوان',
+      title: formData.title || t('editor.untitled'),
       description: formData.description,
       content: formData.content,
       categoryId: formData.categoryId,
@@ -286,34 +286,38 @@ ${textToImprove}`;
 
   // Simulate Auto-saving feature
   useEffect(() => {
+    setAutoSavedTime(t('editor.secondsAgo'));
+  }, [lang]);
+
+  useEffect(() => {
     const timer = setInterval(() => {
-      setAutoSavedTime('منذ ثوان');
+      setAutoSavedTime(t('editor.secondsAgo'));
     }, 10000);
     return () => clearInterval(timer);
-  }, []);
+  }, [lang]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Breadcrumb Header */}
       <div className="text-xs font-bold opacity-50 flex items-center gap-1.5 mb-2 select-none">
-        <Link to="/prompts" className="hover:text-accent">البرومبتات</Link>
-        <ChevronLeft className="w-3.5 h-3.5" />
-        <span>تحرير/إنشاء برومبت</span>
+        <Link to="/prompts" className="hover:text-accent">{t('sidebar.prompts')}</Link>
+        <ChevronLeft className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
+        <span>{t('editor.editPrompt')}</span>
       </div>
 
       <PageHeader
-        title={id ? 'تحرير/إنشاء برومبت' : 'إنشاء برومبت جديد'}
-        subtitle="إنشاء برومبت جديد أو تعديل برومبت موجود لتنظيمه في مكتبتك."
+        title={id ? t('editor.editPrompt') : t('editor.newPrompt')}
+        subtitle={t('editor.subtitle')}
         showBack
         actions={
           <div className="flex gap-3">
             <Button variant="ghost" onClick={() => navigate(-1)}>
-              <X className="w-4 h-4 ml-2" />
-              إلغاء
+              <X className="w-4 h-4 me-2" />
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleSave} loading={isSaved}>
-              {isSaved ? <CheckCircle2 className="w-4 h-4 ml-2" /> : <Save className="w-4 h-4 ml-2" />}
-              حفظ البرومبت
+              {isSaved ? <CheckCircle2 className="w-4 h-4 me-2" /> : <Save className="w-4 h-4 me-2" />}
+              {t('editor.savePrompt')}
             </Button>
           </div>
         }
@@ -325,14 +329,14 @@ ${textToImprove}`;
         <div className="col-span-12 lg:col-span-8 space-y-6">
           <Card className="bg-white dark:bg-surface-dark border-border/40">
             <CardHeader 
-              title="محتوى البرومبت" 
-              subtitle="أدخل تفاصيل البرومبت وبياناته"
+              title={t('editor.promptContent')} 
+              subtitle={t('editor.enterDetails')}
               actions={
                 <div className="flex items-center gap-3">
                   {/* Autosave badge matching Image 4 */}
                   <div className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
                     <Check className="w-3 h-3" />
-                    <span>تم الحفظ تلقائياً</span>
+                    <span>{t('editor.autosaved')}</span>
                     <span className="opacity-60">{autoSavedTime}</span>
                   </div>
                 </div>
@@ -340,22 +344,22 @@ ${textToImprove}`;
             />
             <CardContent className="space-y-4">
               <Input
-                label="عنوان البرومبت *"
-                placeholder="كتابة خطة محتوى أسبوع كامل..."
+                label={t('editor.titleLabel')}
+                placeholder={t('editor.titlePlaceholder')}
                 value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
               />
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
-                  label="التصنيف"
+                  label={t('editor.category')}
                   value={formData.categoryId}
                   onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
                   options={data.categories.map(c => ({ value: c.id, label: c.name }))}
                 />
                 <Input
-                  label="الوسوم (مفصولة بفاصلة)"
-                  placeholder="تخطيط، محتوى، تسويق"
+                  label={t('editor.tagsLabel')}
+                  placeholder={t('editor.tagsPlaceholder')}
                   value={formData.tags}
                   onChange={e => setFormData({ ...formData, tags: e.target.value })}
                 />
@@ -363,14 +367,14 @@ ${textToImprove}`;
 
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="المنشئ"
-                  placeholder="أحمد النعيمي"
+                  label={t('editor.authorLabel')}
+                  placeholder={lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi'}
                   value={formData.author}
                   onChange={e => setFormData({ ...formData, author: e.target.value })}
                 />
                 <Input
-                  label="المصدر"
-                  placeholder="مكتبة الفريق"
+                  label={t('editor.sourceLabel')}
+                  placeholder={lang === 'ar' ? 'مكتبة الفريق' : 'Team Library'}
                   value={formData.source}
                   onChange={e => setFormData({ ...formData, source: e.target.value })}
                 />
@@ -381,8 +385,8 @@ ${textToImprove}`;
           {/* Text Area Card with Rich Toolbar */}
           <Card className="overflow-hidden bg-white dark:bg-surface-dark border-border/40">
             <CardHeader 
-               title="نص البرومبت *" 
-               subtitle="اكتب البرومبت واستخدم {variable} لإضافة متغيرات" 
+               title={t('editor.contentLabel')} 
+               subtitle={t('editor.contentSubtitle')} 
                actions={
                  <div className="flex flex-col items-end gap-1.5 shrink-0 select-none">
                    {/* View Switcher: Editor / Preview */}
@@ -393,7 +397,7 @@ ${textToImprove}`;
                        className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
                      >
                        <Code className="w-3.5 h-3.5" />
-                       محرر
+                       {t('editor.modeEditor')}
                      </button>
                      <button
                        type="button"
@@ -401,7 +405,7 @@ ${textToImprove}`;
                        className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
                      >
                        <Eye className="w-3.5 h-3.5" />
-                       معاينة
+                       {t('editor.modePreview')}
                      </button>
                    </div>
                    {/* AI Enhancer Buttons - Positioned cleanly under the switcher */}
@@ -418,14 +422,14 @@ ${textToImprove}`;
                                ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
                                : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
                            )}
-                           title="تحسين صياغة البرومبت عبر Gemini"
+                           title={t('editor.enhanceGemini')}
                          >
                            <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin")} />
                            <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                              <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                            </span>
                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             Gemini جاهز ومفعّل
+                             {t('editor.geminiReady')}
                            </span>
                          </button>
                        )}
@@ -440,14 +444,14 @@ ${textToImprove}`;
                                ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
                                : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
                            )}
-                           title="تحسين صياغة البرومبت عبر OpenAI"
+                           title={t('editor.enhanceOpenAI')}
                          >
                            <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin")} />
                            <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                              <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                            </span>
                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             OpenAI جاهز ومفعّل
+                             {t('editor.openaiReady')}
                            </span>
                          </button>
                        )}
@@ -462,14 +466,14 @@ ${textToImprove}`;
                                ? "bg-orange-500 text-white border-orange-600 shadow-sm"
                                : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
                            )}
-                           title="تحسين صياغة البرومبت عبر Claude"
+                           title={t('editor.enhanceClaude')}
                          >
                            <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin")} />
                            <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
                              <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
                            </span>
                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             Claude جاهز ومفعّل
+                             {t('editor.claudeReady')}
                            </span>
                          </button>
                        )}
@@ -487,7 +491,7 @@ ${textToImprove}`;
                 <button 
                   onClick={handleImageToolbarClick} 
                   type="button"
-                  title="رفع صورة وإدراجها" 
+                  title={t('editor.tooltipUploadImage')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
                 >
                   <Image className="w-4 h-4 opacity-70" />
@@ -499,7 +503,7 @@ ${textToImprove}`;
                 <button 
                   onClick={handleUndo} 
                   type="button"
-                  title="تراجع" 
+                  title={t('editor.tooltipUndo')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
                 >
                   <Undo className="w-4 h-4 opacity-70" />
@@ -507,7 +511,7 @@ ${textToImprove}`;
                 <button 
                   onClick={handleRedo} 
                   type="button"
-                  title="إعادة" 
+                  title={t('editor.tooltipRedo')} 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
                 >
                   <Redo className="w-4 h-4 opacity-70" />
@@ -521,9 +525,9 @@ ${textToImprove}`;
                   onChange={e => setFontFamily(e.target.value)}
                   className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
                 >
-                  <option value="font-sans">IBM Plex Sans (عادي)</option>
-                  <option value="font-mono">Monospace (كود)</option>
-                  <option value="font-serif">Serif (كلاسيك)</option>
+                  <option value="font-sans">{t('editor.fontSans')}</option>
+                  <option value="font-mono">{t('editor.fontMono')}</option>
+                  <option value="font-serif">{t('editor.fontSerif')}</option>
                 </select>
 
                 {/* Font Size selector */}
@@ -550,25 +554,25 @@ ${textToImprove}`;
                       setIsHeaderDropdownOpen(false);
                     }}
                     type="button"
-                    title="لون الخط" 
+                    title={t('editor.tooltipColor')} 
                     className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
                   >
                     <Palette className="w-4 h-4 opacity-70 text-accent" />
                   </button>
                   {isPenDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
                       {[
-                        { name: 'أحمر', hex: '#ef4444', class: 'bg-red-500' },
-                        { name: 'أخضر', hex: '#22c55e', class: 'bg-emerald-500' },
-                        { name: 'أزرق', hex: '#3b82f6', class: 'bg-blue-500' },
-                        { name: 'بنفسجي', hex: '#a855f7', class: 'bg-purple-500' },
-                        { name: 'برتقالي', hex: '#f97316', class: 'bg-orange-500' }
+                        { name: lang === 'ar' ? 'أحمر' : 'Red', hex: '#ef4444', class: 'bg-red-500' },
+                        { name: lang === 'ar' ? 'أخضر' : 'Green', hex: '#22c55e', class: 'bg-emerald-500' },
+                        { name: lang === 'ar' ? 'أزرق' : 'Blue', hex: '#3b82f6', class: 'bg-blue-500' },
+                        { name: lang === 'ar' ? 'بنفسجي' : 'Purple', hex: '#a855f7', class: 'bg-purple-500' },
+                        { name: lang === 'ar' ? 'برتقالي' : 'Orange', hex: '#f97316', class: 'bg-orange-500' }
                       ].map((color, idx) => (
                         <button 
                           key={idx}
                           type="button"
                           onClick={() => insertColorText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
                         >
                           <span className={cn("w-3 h-3 rounded-full shrink-0", color.class)} />
                           <span>{color.name}</span>
@@ -577,10 +581,10 @@ ${textToImprove}`;
                       <button 
                         type="button"
                         onClick={() => insertColorText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
                       >
                         <span className="w-3 h-3 rounded-full shrink-0 bg-transparent border border-border" />
-                        <span>مسح التنسيق</span>
+                        <span>{t('editor.clearFormat')}</span>
                       </button>
                     </div>
                   )}
@@ -595,24 +599,24 @@ ${textToImprove}`;
                       setIsHeaderDropdownOpen(false);
                     }}
                     type="button"
-                    title="تمييز النص" 
+                    title={t('editor.tooltipHighlight')} 
                     className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
                   >
                     <Highlighter className="w-4 h-4 opacity-70 text-warning" />
                   </button>
                   {isHighlighterDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
                       {[
-                        { name: 'أصفر', hex: '#fef08a', class: 'bg-yellow-200 text-slate-800' },
-                        { name: 'ليموني', hex: '#bbf7d0', class: 'bg-emerald-200 text-slate-800' },
-                        { name: 'سماوي', hex: '#cffafe', class: 'bg-cyan-200 text-slate-800' },
-                        { name: 'وردي', hex: '#fbcfe8', class: 'bg-pink-200 text-slate-800' }
+                        { name: lang === 'ar' ? 'أصفر' : 'Yellow', hex: '#fef08a', class: 'bg-yellow-200 text-slate-800' },
+                        { name: lang === 'ar' ? 'ليموني' : 'Greenish', hex: '#bbf7d0', class: 'bg-emerald-200 text-slate-800' },
+                        { name: lang === 'ar' ? 'سماوي' : 'Cyan', hex: '#cffafe', class: 'bg-cyan-200 text-slate-800' },
+                        { name: lang === 'ar' ? 'وردي' : 'Pink', hex: '#fbcfe8', class: 'bg-pink-200 text-slate-800' }
                       ].map((color, idx) => (
                         <button 
                           key={idx}
                           type="button"
                           onClick={() => insertHighlightText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
                         >
                           <span className={cn("w-3 h-3 rounded shrink-0", color.class)} />
                           <span>{color.name}</span>
@@ -621,10 +625,10 @@ ${textToImprove}`;
                       <button 
                         type="button"
                         onClick={() => insertHighlightText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-right flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
                       >
                         <span className="w-3 h-3 rounded shrink-0 bg-transparent border border-border" />
-                        <span>مسح التمييز</span>
+                        <span>{t('editor.clearHighlight')}</span>
                       </button>
                     </div>
                   )}
@@ -644,18 +648,18 @@ ${textToImprove}`;
                     className="h-8 px-2.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer text-slate-700 dark:text-slate-200"
                   >
                     <Heading className="w-3.5 h-3.5 text-accent" />
-                    <span>العناوين</span>
+                    <span>{t('editor.headings')}</span>
                   </button>
                   {isHeaderDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-right">
+                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
                       {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
                         <button 
                           key={idx}
                           type="button"
                           onClick={() => insertHeader(tag)}
-                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-right cursor-pointer text-slate-700 dark:text-slate-200"
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
                         >
-                          عنوان H{idx + 1}
+                          {t('editor.heading')} H{idx + 1}
                         </button>
                       ))}
                     </div>
@@ -670,7 +674,7 @@ ${textToImprove}`;
                     onClick={() => handleAlignmentChange('right')}
                     type="button"
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة لليمين"
+                    title={t('editor.tooltipAlignRight')}
                   >
                     <AlignRight className="w-3.5 h-3.5" />
                   </button>
@@ -678,7 +682,7 @@ ${textToImprove}`;
                     onClick={() => handleAlignmentChange('center')}
                     type="button"
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة للوسط"
+                    title={t('editor.tooltipAlignCenter')}
                   >
                     <AlignCenter className="w-3.5 h-3.5" />
                   </button>
@@ -686,7 +690,7 @@ ${textToImprove}`;
                     onClick={() => handleAlignmentChange('left')}
                     type="button"
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="محاذاة لليصار"
+                    title={t('editor.tooltipAlignLeft')}
                   >
                     <AlignLeft className="w-3.5 h-3.5" />
                   </button>
@@ -694,7 +698,7 @@ ${textToImprove}`;
                     onClick={() => handleAlignmentChange('justify')}
                     type="button"
                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title="ضبط النص"
+                    title={t('editor.tooltipAlignJustify')}
                   >
                     <AlignJustify className="w-3.5 h-3.5" />
                   </button>
@@ -703,15 +707,15 @@ ${textToImprove}`;
                 <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
 
                 {/* Formatting Helpers */}
-                <button type="button" onClick={() => execFormat('bold')} title="عريض" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('italic')} title="مائل" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('underline')} title="تسطير" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Underline className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('strikeThrough')} title="يتوسطه خط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Strikethrough className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('insertUnorderedList')} title="قائمة نقطية" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('insertOrderedList')} title="قائمة رقمية" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><ListOrdered className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('formatBlock', '<blockquote>')} title="اقتباس" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Quote className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('formatBlock', '<pre>')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={insertLink} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('bold')} title={lang === 'ar' ? 'عريض' : 'Bold'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('italic')} title={lang === 'ar' ? 'مائل' : 'Italic'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('underline')} title={lang === 'ar' ? 'تسطير' : 'Underline'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Underline className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('strikeThrough')} title={lang === 'ar' ? 'يتوسطه خط' : 'Strikethrough'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Strikethrough className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('insertUnorderedList')} title={lang === 'ar' ? 'قائمة نقطية' : 'Bullet List'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('insertOrderedList')} title={lang === 'ar' ? 'قائمة رقمية' : 'Numbered List'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><ListOrdered className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('formatBlock', '<blockquote>')} title={lang === 'ar' ? 'اقتباس' : 'Blockquote'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Quote className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={() => execFormat('formatBlock', '<pre>')} title={lang === 'ar' ? 'كود' : 'Code Block'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
+                <button type="button" onClick={insertLink} title={lang === 'ar' ? 'رابط' : 'Link'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
               </div>
             )}
 
@@ -732,9 +736,9 @@ ${textToImprove}`;
                       contentEditable
                       onInput={handleEditorInput}
                       onPaste={handlePaste}
-                      {...{ placeholder: "اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات تفاعلية." }}
+                      {...{ placeholder: t('editor.editorPlaceholder') }}
                       className={cn(
-                        "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full transition-all duration-500",
+                        "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-start w-full transition-all duration-500",
                         fontFamily,
                         fontSize,
                         aiEnhancing && "animate-pulse",
@@ -742,10 +746,10 @@ ${textToImprove}`;
                         aiEnhancing && aiEnhancingProvider === 'openai' && "border-emerald-500/40 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.08)]",
                         aiEnhancing && aiEnhancingProvider === 'claude' && "border-orange-500/40 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.08)]"
                       )}
-                      style={{ direction: 'rtl' }}
+                      style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
                     />
-                    <div className="absolute bottom-3 left-6 text-[9px] font-bold opacity-45">
-                      عدد الأحرف: {charCount}
+                    <div className="absolute bottom-3 start-6 text-[9px] font-bold opacity-45">
+                      {t('editor.charCountText').replace('{count}', String(charCount))}
                     </div>
 
                      {/* AI Loading/Generating Overlay */}
@@ -758,24 +762,24 @@ ${textToImprove}`;
                            aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
                          )}>
                            <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                           <span className="text-xs font-black">جاري تحسين الصياغة بالذكاء الاصطناعي...</span>
+                           <span className="text-xs font-black">{t('editor.aiEnhancing')}</span>
                          </div>
                        </div>
                      )}
                  </div>
                ) : (
-                 <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">
-                    <Markdown rehypePlugins={[rehypeRaw]}>{formData.content || '_لا يوجد محتوى للمعاينة..._'}</Markdown>
+                 <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto" style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
+                    <Markdown rehypePlugins={[rehypeRaw]}>{formData.content || t('editor.noContentPreview')}</Markdown>
                  </div>
                )}
             </CardContent>
           </Card>
 
           <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="ملاحظات" subtitle="ملاحظات داخلية حول كيفية استخدام هذا البرومبت" />
+            <CardHeader title={t('editor.notes')} subtitle={t('editor.notesSubtitle')} />
             <CardContent>
               <Textarea
-                placeholder="ملاحظات إضافية..."
+                placeholder={t('editor.notesPlaceholder')}
                 className="min-h-[80px] text-xs"
                 value={formData.notes}
                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -789,7 +793,7 @@ ${textToImprove}`;
           
           {/* Variables panel matching Image 4 */}
           <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="المتغيرات" icon={Variable} subtitle="استخدم المتغيرات لجعل البرومبت ديناميكياً" />
+            <CardHeader title={t('editor.variables')} icon={Variable} subtitle={t('editor.variablesSubtitle')} />
             <CardContent className="space-y-2">
               {uniqueVariables.map((v, i) => (
                 <div key={i} className="flex items-center justify-between p-2.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/20">
@@ -797,53 +801,53 @@ ${textToImprove}`;
                     <GripVertical className="w-3.5 h-3.5 opacity-30 cursor-grab" />
                     <span className="text-xs font-mono font-bold">{"{"}{v}{"}"}</span>
                   </div>
-                  <Badge variant="accent" className="text-[9px] font-black py-0.5 px-2">نص</Badge>
+                  <Badge variant="accent" className="text-[9px] font-black py-0.5 px-2">{t('editor.badgeText')}</Badge>
                 </div>
               ))}
               {uniqueVariables.length === 0 && (
-                <p className="text-xs text-muted-light font-medium opacity-50 italic py-2">لم يتم اكتشاف متغيرات بعد...</p>
+                <p className="text-xs text-muted-light font-medium opacity-50 italic py-2">{t('editor.noVariables')}</p>
               )}
             </CardContent>
           </Card>
 
           {/* Prompt Info */}
           <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="معلومات البرومبت" icon={Info} />
+            <CardHeader title={t('editor.promptInfo')} icon={Info} />
             <CardContent className="space-y-3 text-xs font-bold">
               <div className="flex justify-between">
-                <span className="opacity-50">تاريخ الإنشاء:</span>
-                <span>{existingPrompt ? new Date(existingPrompt.createdAt).toLocaleDateString('ar-EG') : new Date().toLocaleDateString('ar-EG')}</span>
+                <span className="opacity-50">{t('editor.createdAt')}</span>
+                <span>{existingPrompt ? new Date(existingPrompt.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="opacity-50">آخر تعديل:</span>
-                <span>{existingPrompt ? new Date(existingPrompt.updatedAt).toLocaleTimeString('ar-EG') : 'الآن'}</span>
+                <span className="opacity-50">{t('editor.lastModified')}</span>
+                <span>{existingPrompt ? new Date(existingPrompt.updatedAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US') : (lang === 'ar' ? 'الآن' : 'Now')}</span>
               </div>
               <div className="flex justify-between">
-                <span className="opacity-50">المنشئ:</span>
+                <span className="opacity-50">{t('editor.creator')}</span>
                 <span>{formData.author}</span>
               </div>
               <div className="flex justify-between">
-                <span className="opacity-50">الحالة:</span>
-                <span className="text-success">نشط</span>
+                <span className="opacity-50">{t('editor.status')}</span>
+                <span className="text-success">{lang === 'ar' ? 'نشط' : 'Active'}</span>
               </div>
             </CardContent>
           </Card>
 
           {/* Usage Estimation matching Image 4 */}
           <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="تقدير الاستخدام" icon={Activity} />
+            <CardHeader title={t('editor.usageEstimate')} icon={Activity} />
             <CardContent className="grid grid-cols-2 gap-4 text-center">
               <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
-                <div className="text-sm font-bold mb-1">الرموز (Tokens)</div>
+                <div className="text-sm font-bold mb-1">{t('editor.tokens')}</div>
                 <div className="text-xl font-black text-slate-800 dark:text-slate-100">~ {tokenCount}</div>
-                <div className="text-[9px] opacity-40 font-bold">تقدير تقريبي</div>
+                <div className="text-[9px] opacity-40 font-bold">{t('editor.approximate')}</div>
               </div>
               <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
-                <div className="text-sm font-bold mb-1">عدد الأحرف</div>
+                <div className="text-sm font-bold mb-1">{t('editor.charCountTitle')}</div>
                 <div className="text-xl font-black text-slate-800 dark:text-slate-100">{charCount}</div>
-                <div className="text-[9px] opacity-40 font-bold">بما في ذلك المسافات</div>
+                <div className="text-[9px] opacity-40 font-bold">{t('editor.includingSpaces')}</div>
               </div>
-            </CardContent>
+             </CardContent>
           </Card>
         </div>
 

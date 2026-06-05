@@ -7,15 +7,15 @@ import { cn } from '../../lib/cn';
 import { Link } from 'react-router-dom';
 
 export function FavoritesPage() {
-  const { data, toggleFavorite, deletePrompt } = useApp();
+  const { data, toggleFavorite, deletePrompt, t } = useApp();
   
   const favoritePrompts = data.prompts.filter(p => p.isFavorite);
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="المفضلة"
-        subtitle="برومبتاتك المفضلة للوصول السريع إليها والأكثر استخداماً."
+        title={t('favorites.title')}
+        subtitle={t('favorites.subtitle')}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -25,7 +25,7 @@ export function FavoritesPage() {
               title={prompt.title}
               subtitle={data.categories.find(c => c.id === prompt.categoryId)?.name}
               icon={() => (
-                <button onClick={() => toggleFavorite(prompt.id)}>
+                <button onClick={() => toggleFavorite(prompt.id)} className="cursor-pointer">
                    <Star className="w-5 h-5 text-accent fill-accent" />
                 </button>
               )}
@@ -42,7 +42,7 @@ export function FavoritesPage() {
                 </div>
                 <div className="flex gap-2">
                    <Link to={`/prompts/${prompt.id}`}>
-                    <button className="p-2 bg-accent text-white rounded-xl shadow-md shadow-accent/20">
+                    <button className="p-2 bg-accent text-white rounded-xl shadow-md shadow-accent/20 cursor-pointer">
                       <ExternalLink className="w-4 h-4" />
                     </button>
                   </Link>
@@ -55,7 +55,7 @@ export function FavoritesPage() {
         {favoritePrompts.length === 0 && (
           <div className="col-span-full py-32 text-center flex flex-col items-center gap-4">
              <Star className="w-16 h-16 opacity-10" />
-             <p className="text-muted-light font-bold">لا توجد برومبتات في المفضلة حالياً.</p>
+             <p className="text-muted-light font-bold">{t('favorites.noFavorites')}</p>
           </div>
         )}
       </div>

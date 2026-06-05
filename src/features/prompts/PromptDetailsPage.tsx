@@ -12,7 +12,7 @@ import { PromptVariablesPanel } from '../../components/prompts/PromptVariablesPa
 export function PromptDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, toggleFavorite, duplicatePrompt, showToast } = useApp();
+  const { data, toggleFavorite, duplicatePrompt, showToast, t, lang } = useApp();
 
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
@@ -22,12 +22,26 @@ export function PromptDetailsPage() {
 
   const prompt = data.prompts.find(p => p.id === id);
 
+  const getTagStyle = (tagName: string) => {
+    const found = data.tags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
+    if (found) {
+      return {
+        backgroundColor: `${found.color}15`,
+        color: found.color,
+        borderColor: `${found.color}30`,
+        borderWidth: '1px',
+        borderStyle: 'solid' as const,
+      };
+    }
+    return {};
+  };
+
   if (!prompt) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <AlertCircle className="w-16 h-16 text-danger opacity-20" />
-        <h2 className="text-xl font-black">البرومبت غير موجود</h2>
-        <Button variant="secondary" onClick={() => navigate('/prompts')}>العودة للبرومبتات</Button>
+        <h2 className="text-xl font-black">{t('details.promptNotFound')}</h2>
+        <Button variant="secondary" onClick={() => navigate('/prompts')}>{t('details.backToPrompts')}</Button>
       </div>
     );
   }
@@ -58,7 +72,7 @@ export function PromptDetailsPage() {
 
   const handleDuplicate = () => {
     duplicatePrompt(prompt.id);
-    showToast('تم تكرار البرومبت بنجاح!', 'success');
+    showToast(t('details.duplicateSuccess'), 'success');
   };
 
   const getApiKey = (provider: string) => {
@@ -92,7 +106,7 @@ export function PromptDetailsPage() {
       if (action === 'chat') setAiInput('');
     } catch (error: any) {
       console.error(error);
-      setAiResponse(`خطأ: ${error.message}`);
+      setAiResponse(`${t('details.error')}${error.message}`);
     } finally {
       setAiLoading(false);
     }
@@ -118,34 +132,34 @@ export function PromptDetailsPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Breadcrumb Header */}
       <div className="text-xs font-bold opacity-50 flex items-center gap-1.5 mb-2 select-none">
-        <Link to="/prompts" className="hover:text-accent">البرومبتات</Link>
-        <ChevronLeft className="w-3.5 h-3.5" />
-        <span>معاينة البرومبت</span>
+        <Link to="/prompts" className="hover:text-accent">{t('sidebar.prompts')}</Link>
+        <ChevronLeft className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
+        <span>{t('details.title')}</span>
       </div>
 
       <PageHeader
-        title="معاينة البرومبت"
-        subtitle="تعرض تفاصيل البرومبت ومعاينته قبل الاستخدام."
+        title={t('details.title')}
+        subtitle={t('details.subtitle')}
         showBack
         actions={
           <div className="flex gap-2.5">
              <Button variant="secondary" onClick={() => toggleFavorite(prompt.id)}>
-              <Star className={cn("w-4 h-4 ml-2", prompt.isFavorite && "fill-accent text-accent")} />
-              {prompt.isFavorite ? 'مفضل' : 'إضافة للمفضلة'}
+              <Star className={cn("w-4 h-4 me-2", prompt.isFavorite && "fill-accent text-accent")} />
+              {prompt.isFavorite ? t('details.favorite') : t('details.addToFavorites')}
             </Button>
             <Button variant="secondary" onClick={handleDuplicate}>
-              <CopyPlus className="w-4 h-4 ml-2" />
-              تكرار
+              <CopyPlus className="w-4 h-4 me-2" />
+              {t('details.duplicate')}
             </Button>
             <Link to={`/editor/${prompt.id}`}>
               <Button variant="secondary">
-                <Edit className="w-4 h-4 ml-2" />
-                تحرير
+                <Edit className="w-4 h-4 me-2" />
+                {t('details.edit')}
               </Button>
             </Link>
             <Button onClick={() => handleCopy()} className="bg-accent text-white shadow-lg shadow-accent/10">
-              {copied ? <Check className="w-4 h-4 ml-2" /> : <Copy className="w-4 h-4 ml-2" />}
-              نسخ البرومبت
+              {copied ? <Check className="w-4 h-4 me-2" /> : <Copy className="w-4 h-4 me-2" />}
+              {t('details.copyPrompt')}
             </Button>
           </div>
         }
@@ -162,10 +176,11 @@ export function PromptDetailsPage() {
           />
 
           <Card className="min-h-[300px] bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="نص البرومبت" subtitle="معاينة النص مع إبراز المتغيرات" />
+            <CardHeader title={t('details.promptText')} subtitle={t('details.previewTextSubtitle')} />
             <CardContent>
               <div 
-                className="p-6 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/40 font-mono text-sm leading-loose whitespace-pre-wrap select-all"
+                className="p-6 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/40 font-mono text-sm leading-loose whitespace-pre-wrap select-all text-start"
+                style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
                 dangerouslySetInnerHTML={{ __html: getHighlightedContentHtml(prompt.content) }}
               />
             </CardContent>
@@ -174,9 +189,9 @@ export function PromptDetailsPage() {
           {/* AI Assistant Section */}
           <Card className="border-accent/30 overflow-hidden bg-white dark:bg-surface-dark border-border/40">
             <CardHeader 
-              title="مساعد الذكاء الاصطناعي الذكي" 
+              title={t('details.aiAssistantTitle')} 
               icon={Sparkles}
-              subtitle="اختر الوكيل المفضل واختبر البرومبت أو قم بتحسينه" 
+              subtitle={t('details.aiAssistantSubtitle')} 
               actions={
                 <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/40 gap-1">
                   {[
@@ -205,14 +220,14 @@ export function PromptDetailsPage() {
             <CardContent className="space-y-4">
               <div className="flex gap-3">
                 <Button variant="secondary" className="flex-1" onClick={() => handleAiAction('improve')} loading={aiLoading}>
-                   <Sparkles className="w-4 h-4 ml-2 text-success" />
-                   تحسين البرومبت
+                   <Sparkles className="w-4 h-4 me-2 text-success" />
+                   {t('details.improvePrompt')}
                 </Button>
                 <div className="flex-2 flex gap-2">
                    <input 
                     type="text" 
-                    placeholder={`اسأل ${aiProvider} عن هذا البرومبت...`}
-                    className="flex-1 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-xs outline-none focus:border-accent"
+                    placeholder={t('details.askAiPlaceholder').replace('{provider}', aiProvider)}
+                    className="flex-1 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-xs outline-none focus:border-accent text-start"
                     value={aiInput}
                     onChange={e => setAiInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAiAction('chat')}
@@ -226,15 +241,15 @@ export function PromptDetailsPage() {
               {aiResponse && (
                 <div className="p-5 bg-success/5 border border-success/20 rounded-2xl space-y-3">
                    <div className="flex items-center justify-between">
-                      <Badge variant="success">استجابة المساعد</Badge>
-                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setAiResponse('')}>مسح</Button>
+                      <Badge variant="success">{t('details.assistantResponse')}</Badge>
+                      <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setAiResponse('')}>{t('details.clear')}</Button>
                    </div>
-                   <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
+                   <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-start">
                       {aiResponse}
                    </div>
                    <div className="pt-2 flex gap-2">
                         <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(aiResponse) }}>
-                           <Copy className="w-3 h-3 ml-1" /> نسخ
+                           <Copy className="w-3 h-3 me-1" /> {t('details.copy')}
                         </Button>
                    </div>
                 </div>
@@ -247,22 +262,22 @@ export function PromptDetailsPage() {
             
             {/* Version History Table */}
             <Card className="bg-white dark:bg-surface-dark border-border/40">
-              <CardHeader title="إصدارات البرومبت" icon={Clock} />
+              <CardHeader title={t('details.versionsTitle')} icon={Clock} />
               <div className="overflow-x-auto px-4 pb-4">
-                <table className="w-full text-right text-xs">
+                <table className="w-full text-start text-xs border-collapse">
                   <thead>
                     <tr className="opacity-50 border-b border-border/40 font-bold">
-                      <th className="py-2 pr-2">المنشئ</th>
-                      <th className="py-2">تاريخ الإصدار</th>
-                      <th className="py-2 pl-2">تعديل الإصدار</th>
+                      <th className="py-2 pe-2 text-start">{t('details.creatorCol')}</th>
+                      <th className="py-2 text-start">{t('details.releaseDateCol')}</th>
+                      <th className="py-2 ps-2 text-start">{t('details.releaseEditCol')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {promptVersions.map((v) => (
                       <tr key={v.id} className="border-b border-border/10 hover:bg-surface2-light/20">
-                        <td className="py-3 pr-2 font-bold opacity-80">{prompt.author || 'أحمد النعيمي'}</td>
-                        <td className="py-3 font-mono opacity-60">{new Date(v.createdAt).toLocaleDateString('ar-EG')}</td>
-                        <td className="py-3 pl-2 opacity-80 flex items-center gap-1.5 justify-between">
+                        <td className="py-3 pe-2 font-bold opacity-80">{prompt.author || (lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi')}</td>
+                        <td className="py-3 font-mono opacity-60">{new Date(v.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</td>
+                        <td className="py-3 ps-2 opacity-80 flex items-center gap-1.5 justify-between">
                           <span className="truncate max-w-[120px]">{v.changeNote}</span>
                           <span className="px-1.5 py-0.5 rounded bg-surface2-light dark:bg-surface2-dark text-[9px] font-black">v{v.version}.0</span>
                         </td>
@@ -270,7 +285,7 @@ export function PromptDetailsPage() {
                     ))}
                     {promptVersions.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="py-6 text-center opacity-40 italic">لا توجد إصدارات سابقة محفوظة.</td>
+                        <td colSpan={3} className="py-6 text-center opacity-40 italic">{t('details.noVersions')}</td>
                       </tr>
                     )}
                   </tbody>
@@ -280,7 +295,7 @@ export function PromptDetailsPage() {
 
             {/* Related Prompts */}
             <Card className="bg-white dark:bg-surface-dark border-border/40">
-              <CardHeader title="برومبتات ذات صلة" icon={FileText} />
+              <CardHeader title={t('details.relatedPrompts')} icon={FileText} />
               <CardContent className="space-y-3">
                 {relatedPrompts.map((p) => (
                   <Link 
@@ -288,15 +303,15 @@ export function PromptDetailsPage() {
                     to={`/prompts/${p.id}`}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-surface2-light dark:hover:bg-surface2-dark border border-border/20 transition-all group"
                   >
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-0.5 text-start">
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-accent transition-colors">{p.title}</span>
-                      <span className="text-[10px] opacity-40">{data.categories.find(c => c.id === p.categoryId)?.name || 'عام'}</span>
+                      <span className="text-[10px] opacity-40">{data.categories.find(c => c.id === p.categoryId)?.name || (lang === 'ar' ? 'عام' : 'General')}</span>
                     </div>
-                    <ChevronLeft className="w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity" />
+                    <ChevronLeft className={cn("w-4 h-4 opacity-0 group-hover:opacity-60 transition-opacity", lang === 'en' && "rotate-180")} />
                   </Link>
                 ))}
                 {relatedPrompts.length === 0 && (
-                  <p className="text-xs text-center opacity-40 italic py-6">لا توجد برومبتات ذات صلة.</p>
+                  <p className="text-xs text-center opacity-40 italic py-6">{t('details.noRelated')}</p>
                 )}
               </CardContent>
             </Card>
@@ -306,54 +321,65 @@ export function PromptDetailsPage() {
         {/* Right Side: Metadata Panel */}
         <div className="col-span-12 lg:col-span-4 space-y-6">
           <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="معلومات البرومبت" />
+            <CardHeader title={t('details.title')} />
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <span className="opacity-50 font-medium">التصنيف</span>
-                <Badge variant="accent">{category?.name || 'غير مصنف'}</Badge>
+                <span className="opacity-50 font-medium">{t('details.category')}</span>
+                <Badge variant="accent">{category?.name || (lang === 'ar' ? 'غير مصنف' : 'Unclassified')}</Badge>
               </div>
-              <div className="flex flex-col gap-2 py-2 border-b border-border/40">
-                <span className="opacity-50 font-medium text-xs">الوسوم</span>
+              <div className="flex flex-col gap-2 py-2 border-b border-border/40 text-start">
+                <span className="opacity-50 font-medium text-xs">{t('details.tags')}</span>
                 <div className="flex flex-wrap gap-1">
-                  {prompt.tags.map(tag => (
-                    <Badge key={tag} variant="default">{tag}</Badge>
-                  ))}
+                  {prompt.tags.map(tag => {
+                    const style = getTagStyle(tag);
+                    const hasColor = !!style.color;
+                    return (
+                      <Badge 
+                        key={tag} 
+                        variant={hasColor ? undefined : "default"}
+                        className={cn(!hasColor && "opacity-60")}
+                        style={style}
+                      >
+                        #{tag}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <span className="opacity-50 font-medium">الإصدار</span>
+                <span className="opacity-50 font-medium">{t('details.version')}</span>
                 <span className="font-black text-xs bg-surface2-light dark:bg-surface2-dark px-2.5 py-1 rounded-lg">v{prompt.version}.0.0</span>
               </div>
               <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <span className="opacity-50 font-medium">الاستخدامات</span>
-                <span className="font-bold">{prompt.usageCount} مرة</span>
+                <span className="opacity-50 font-medium">{t('details.usages')}</span>
+                <span className="font-bold">{prompt.usageCount} {lang === 'ar' ? 'مرة' : 'times'}</span>
               </div>
               <div className="flex items-center justify-between text-sm py-2 border-b border-border/40">
-                <span className="opacity-50 font-medium">المنشئ</span>
-                <span className="font-bold">{prompt.author || 'أحمد النعيمي'}</span>
+                <span className="opacity-50 font-medium">{t('details.creatorCol')}</span>
+                <span className="font-bold">{prompt.author || (lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi')}</span>
               </div>
               <div className="flex items-center justify-between text-sm py-2">
-                <span className="opacity-50 font-medium">المصدر</span>
-                <span className="font-bold text-accent">{prompt.source || 'مكتبة الفريق'}</span>
+                <span className="opacity-50 font-medium">{t('details.source')}</span>
+                <span className="font-bold text-accent">{prompt.source || (lang === 'ar' ? 'مكتبة الفريق' : 'Team Library')}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card variant="surface" className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title="التواريخ" icon={Calendar} />
+            <CardHeader title={t('details.dates')} icon={Calendar} />
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-accent" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold opacity-50 uppercase">تاريخ الإنشاء</span>
-                  <span className="text-xs font-bold">{new Date(prompt.createdAt).toLocaleDateString('ar-EG')}</span>
+                <div className="flex flex-col text-start">
+                  <span className="text-[10px] font-bold opacity-50 uppercase">{t('details.createdAt')}</span>
+                  <span className="text-xs font-bold">{new Date(prompt.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-accent" />
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold opacity-50 uppercase">آخر تحديث</span>
-                  <span className="text-xs font-bold">{new Date(prompt.updatedAt).toLocaleDateString('ar-EG')}</span>
+                <div className="flex flex-col text-start">
+                  <span className="text-[10px] font-bold opacity-50 uppercase">{t('details.lastUpdatedAt')}</span>
+                  <span className="text-xs font-bold">{new Date(prompt.updatedAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
                 </div>
               </div>
             </CardContent>
