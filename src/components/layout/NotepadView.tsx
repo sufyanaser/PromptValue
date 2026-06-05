@@ -245,6 +245,30 @@ export function NotepadView() {
     input?.click();
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              const base64Url = event.target.result as string;
+              insertTextAtCursor(`\n![image.png](${base64Url})\n`, '');
+              showToast('تم لصق الصورة وإدراجها بنجاح', 'success');
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
   const getFolderForPrompt = (prompt: any): string => {
     const text = (prompt.title + ' ' + prompt.content + ' ' + prompt.tags.join(' ')).toLowerCase();
     for (const folder of folders) {
@@ -588,8 +612,8 @@ export function NotepadView() {
                 
                 {/* Mock Image Icon */}
                 <button 
-                  onClick={() => insertTextAtCursor('![صورة توضيحية](https://picsum.photos/800/400)', ')')} 
-                  title="صورة توضيحية" 
+                  onClick={handleImageToolbarClick} 
+                  title="رفع صورة وإدراجها" 
                   className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
                 >
                   <Image className="w-4 h-4 opacity-70" />
@@ -785,7 +809,7 @@ export function NotepadView() {
                 <button onClick={() => insertTextAtCursor('- ')} title="قائمة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><List className="w-3.5 h-3.5 opacity-60" /></button>
                 <button onClick={() => insertTextAtCursor('`', '`')} title="كود" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Code className="w-3.5 h-3.5 opacity-60" /></button>
                 <button onClick={() => insertTextAtCursor('[رابط](', ')')} title="رابط" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => insertTextAtCursor('![وصف الصورة](', ')')} title="صورة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Image className="w-3.5 h-3.5 opacity-60" /></button>
+                <button onClick={handleImageToolbarClick} title="صورة" className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"><Image className="w-3.5 h-3.5 opacity-60" /></button>
 
               </div>
 
@@ -818,6 +842,8 @@ export function NotepadView() {
             {/* Note Title & Content Editor */}
             <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full flex flex-col gap-6">
               
+              <input id="notepad-image-uploader" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+
               {/* Title Input */}
               <input 
                 type="text"
@@ -834,6 +860,7 @@ export function NotepadView() {
                     id="notepad-textarea"
                     value={selectedPrompt.content}
                     onChange={e => handleContentChange(e.target.value)}
+                    onPaste={handlePaste}
                     className={cn(
                       "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50",
                       fontFamily,
