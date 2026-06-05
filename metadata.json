@@ -1,0 +1,6 @@
+{
+  "name": "PromptVault",
+  "description": "منصة احترافية محلية لإدارة وتنظيم البرومبتات للمحترفين.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

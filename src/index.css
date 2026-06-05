@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background-light: #F8FAFC;
+  --color-shell-light: rgba(255, 255, 255, 0.82);
+  --color-surface-light: rgba(255, 255, 255, 0.88);
+  --color-surface2-light: #F3F4F6;
+  --color-border-light: #E5E7EB;
+  --color-text-light: #111827;
+  --color-muted-light: #6B7280;
+
+  --color-background-dark: #0A0A0B;
+  --color-shell-dark: rgba(13, 13, 14, 0.94);
+  --color-surface-dark: rgba(18, 18, 19, 0.92);
+  --color-surface2-dark: #1F1F21;
+  --color-border-dark: #2D2D2F;
+  --color-text-dark: #F5F5F5;
+  --color-muted-dark: #9CA3AF;
+
+  --color-accent: #F59E0B;
+  --color-accent-soft-light: #FFF7ED;
+  --color-accent-soft-dark: #1C1811;
+
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+
+  --color-border: #E5E7EB;
+  --color-background: #F8FAFC;
+  --color-foreground: #111827;
+
+  --font-sans: "Inter", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --color-background: var(--color-background-light);
+    --color-foreground: var(--color-text-light);
+    --color-border: var(--color-border-light);
+  }
+
+  .dark {
+    --color-background: var(--color-background-dark);
+    --color-foreground: var(--color-text-dark);
+    --color-border: var(--color-border-dark);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    @apply antialiased font-sans transition-colors duration-200;
+    direction: rtl;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-md;
+  }
+}
+
+/* Custom Scrollbar for Arabic/RTL desktop feeling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border/50 rounded-full hover:bg-border transition-colors;
+}

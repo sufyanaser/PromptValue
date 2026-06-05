@@ -1,0 +1,89 @@
+import React from 'react';
+import { useApp } from '../../app/app-provider';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { Card, CardHeader, CardContent } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { History, Shield, Cloud, HardDrive, RefreshCw, Trash2, CheckCircle } from 'lucide-react';
+import { Badge } from '../../components/ui/Badge';
+
+export function BackupsPage() {
+  const { data } = useApp();
+
+  return (
+    <div className="space-y-10">
+      <PageHeader
+        title="النسخ الاحتياطي"
+        subtitle="إدارة نسخ احتياطية لبياناتك واستعادتها من أي فقدان لضمان أمان مكتبتك."
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         <Card className="lg:col-span-2">
+           <CardHeader title="سجل النسخ الاحتياطية" subtitle="آخر 10 نسخ احتياطية تم إنشاؤها" />
+           <div className="overflow-x-auto">
+             <table className="w-full text-right">
+                <thead>
+                  <tr className="bg-surface2-light text-[11px] font-black uppercase text-muted-light border-b border-border/40">
+                    <th className="px-6 py-4">التاريخ</th>
+                    <th className="px-6 py-4">النوع</th>
+                    <th className="px-6 py-4">الحجم</th>
+                    <th className="px-6 py-4">الحالة</th>
+                    <th className="px-6 py-4 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/20">
+                   {[
+                     { date: '2024-05-20 14:30', type: 'تلقائي', size: '2.4 MB', status: 'success' },
+                     { date: '2024-05-19 14:30', type: 'تلقائي', size: '2.3 MB', status: 'success' },
+                     { date: '2024-05-18 10:15', type: 'يدوي', size: '2.3 MB', status: 'success' },
+                   ].map((b, i) => (
+                     <tr key={i} className="hover:bg-surface2-light/30">
+                        <td className="px-6 py-4 text-xs font-bold font-mono">{b.date}</td>
+                        <td className="px-6 py-4 text-xs font-medium">{b.type}</td>
+                        <td className="px-6 py-4 text-[10px] font-black">{b.size}</td>
+                        <td className="px-6 py-4">
+                           <Badge variant={b.status === 'success' ? 'success' : 'danger'}>ناجحة</Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center justify-center gap-2">
+                              <button className="text-[10px] font-black text-accent underline">استعادة</button>
+                              <button className="text-[10px] font-black text-danger/60 hover:text-danger underline">حذف</button>
+                           </div>
+                        </td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+           </div>
+         </Card>
+
+         <div className="space-y-6">
+            <Card>
+               <CardHeader title="إنشاء نسخة الآن" icon={Shield} />
+               <CardContent className="space-y-4">
+                  <p className="text-xs font-medium opacity-60 leading-relaxed">قم بإنشاء نسخة احتياطية فورية وحفظها في المجلد المحدد.</p>
+                  <Button className="w-full">تنفيذ النسخ اليدوي</Button>
+               </CardContent>
+            </Card>
+
+            <Card variant="surface">
+               <CardHeader title="إعدادات النسخ" />
+               <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                     <span className="text-xs font-bold">النسخ التلقائي</span>
+                     <div className="w-10 h-5 bg-accent rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-xs font-bold">التكرار</span>
+                     <span className="text-[10px] font-black bg-white px-2 py-1 rounded-lg">يومي</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                     <span className="text-xs font-bold">الاحتفاظ بآخر</span>
+                     <span className="text-[10px] font-black bg-white px-2 py-1 rounded-lg">5 نسخ</span>
+                  </div>
+               </CardContent>
+            </Card>
+         </div>
+      </div>
+    </div>
+  );
+}
