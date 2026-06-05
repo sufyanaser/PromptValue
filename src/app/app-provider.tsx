@@ -448,7 +448,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       </AnimatePresence>
 
       {/* Toast Notifications Container */}
-      <div className="fixed top-6 left-6 z-[9999] flex flex-col gap-3 max-w-sm w-full pointer-events-none select-none">
+      <div className="fixed bottom-14 left-6 z-[9999] flex flex-col-reverse gap-3 max-w-md w-full pointer-events-none select-none">
         <AnimatePresence>
           {toasts.map(t => {
             const toastIcons = {
@@ -459,37 +459,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
             };
             const Icon = toastIcons[t.type];
             
-            const toastColors = {
-              success: 'border-success/30 bg-white/95 dark:bg-surface-dark/95 text-success shadow-success/5',
-              info: 'border-info/30 bg-white/95 dark:bg-surface-dark/95 text-info shadow-info/5',
-              warning: 'border-accent/30 bg-white/95 dark:bg-surface-dark/95 text-accent shadow-accent/5',
-              danger: 'border-danger/30 bg-white/95 dark:bg-surface-dark/95 text-danger shadow-danger/5'
+            const toastStyles = {
+              success: {
+                card: 'border-success/20 bg-white/90 dark:bg-surface-dark/95 shadow-[0_12px_40px_-12px_rgba(34,197,94,0.18)] dark:shadow-[0_12px_40px_-12px_rgba(34,197,94,0.25)]',
+                iconBox: 'bg-success/10 text-success border border-success/20',
+                progress: 'bg-success'
+              },
+              info: {
+                card: 'border-info/20 bg-white/90 dark:bg-surface-dark/95 shadow-[0_12px_40px_-12px_rgba(59,130,246,0.18)] dark:shadow-[0_12px_40px_-12px_rgba(59,130,246,0.25)]',
+                iconBox: 'bg-info/10 text-info border border-info/20',
+                progress: 'bg-info'
+              },
+              warning: {
+                card: 'border-accent/20 bg-white/90 dark:bg-surface-dark/95 shadow-[0_12px_40px_-12px_rgba(245,158,11,0.18)] dark:shadow-[0_12px_40px_-12px_rgba(245,158,11,0.25)]',
+                iconBox: 'bg-accent/10 text-accent border border-accent/20',
+                progress: 'bg-accent'
+              },
+              danger: {
+                card: 'border-danger/20 bg-white/90 dark:bg-surface-dark/95 shadow-[0_12px_40px_-12px_rgba(239,68,68,0.18)] dark:shadow-[0_12px_40px_-12px_rgba(239,68,68,0.25)]',
+                iconBox: 'bg-danger/10 text-danger border border-danger/20',
+                progress: 'bg-danger'
+              }
             };
+            
+            const style = toastStyles[t.type];
             
             return (
               <motion.div
                 key={t.id}
-                initial={{ opacity: 0, x: -50, scale: 0.9 }}
+                layout
+                initial={{ opacity: 0, x: -40, scale: 0.95 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+                transition={{
+                  opacity: { duration: 0.2 },
+                  x: { duration: 0.25, ease: [0.23, 1, 0.32, 1] },
+                  scale: { duration: 0.2 },
+                  layout: { type: "spring", stiffness: 350, damping: 35 }
+                }}
                 className={cn(
-                  "p-4 rounded-2xl border glass flex items-start gap-3 pointer-events-auto shadow-2xl transition-colors duration-200",
-                  toastColors[t.type]
+                  "relative overflow-hidden p-4 rounded-2xl border glass flex items-center gap-3.5 pointer-events-auto transition-all duration-300",
+                  style.card
                 )}
               >
-                <div className="mt-0.5">
+                <div className={cn("p-2.5 rounded-xl shrink-0 flex items-center justify-center", style.iconBox)}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <div className="flex-1 text-xs font-black leading-relaxed text-slate-800 dark:text-slate-100 pr-1">
+                <div className="flex-1 text-xs font-black leading-relaxed text-slate-800 dark:text-slate-100 pr-1 select-text text-right">
                   {t.message}
                 </div>
                 <button
                   onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
-                  className="opacity-40 hover:opacity-100 transition-opacity mr-2"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shrink-0 cursor-pointer"
                 >
-                  <X className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  <X className="w-4 h-4" />
                 </button>
+                
+                {/* Visual Countdown Progress Indicator */}
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] overflow-hidden rounded-b-2xl bg-slate-100/20 dark:bg-slate-800/10">
+                  <motion.div
+                    initial={{ scaleX: 1 }}
+                    animate={{ scaleX: 0 }}
+                    transition={{ duration: 3.5, ease: 'linear' }}
+                    style={{ originX: 1 }}
+                    className={cn("h-full w-full", style.progress)}
+                  />
+                </div>
               </motion.div>
             );
           })}

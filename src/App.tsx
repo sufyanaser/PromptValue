@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './app/app-provider';
 import { AppShell } from './components/layout/AppShell';
 import { DashboardPage } from './features/dashboard/DashboardPage';
@@ -17,7 +17,7 @@ import { PromptDetailsPage } from './features/prompts/PromptDetailsPage';
 export default function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <HashRouter>
         <AppShell>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
@@ -34,7 +34,7 @@ export default function App() {
             <Route path="/editor/:id" element={<EditorPage />} />
           </Routes>
         </AppShell>
-      </BrowserRouter>
+      </HashRouter>
     </AppProvider>
   );
 }
