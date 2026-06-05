@@ -6,7 +6,7 @@ import { Button } from '../ui/Button';
 import { 
   Folder, FolderOpen, FileText, Plus, Bold, Italic, List, Code, 
   Link as LinkIcon, Image, Heading, AlignLeft, AlignCenter, AlignRight, 
-  AlignJustify, Eye, Edit, ChevronDown, ChevronLeft, Check, X, Undo, Redo, 
+  AlignJustify, Eye, Edit, ChevronDown, ChevronLeft, ChevronRight, Check, X, Undo, Redo, 
   Palette, Highlighter, Trash2, Star, Sliders, Sparkles, Cpu, Brain, RefreshCw
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
