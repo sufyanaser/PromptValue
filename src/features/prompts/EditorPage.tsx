@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../app/app-provider';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -7,16 +7,18 @@ import { Input, Textarea } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Save, X, History, Variable, Info, CheckCircle2, Eye, Code } from 'lucide-react';
+import { Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Layout } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Prompt } from '../../types';
 import Markdown from 'react-markdown';
+import { MarkdownToolbar } from '../../components/prompts/MarkdownToolbar';
 
 export function EditorPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, addPrompt, updatePrompt } = useApp();
-  
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const existingPrompt = id ? data.prompts.find(p => p.id === id) : null;
 
   const [formData, setFormData] = useState({
@@ -30,7 +32,7 @@ export function EditorPage() {
   });
 
   const [isSaved, setIsSaved] = useState(false);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('edit');
 
   const variables = formData.content.match(/\{[^}]+\}/g)?.map(v => v.slice(1, -1)) || [];
 
@@ -59,6 +61,33 @@ export function EditorPage() {
       setIsSaved(false);
       navigate('/prompts');
     }, 1500);
+  };
+
+  const handleInsertMarkdown = (prefix: string, suffix: string = '') => {
+    if (!textareaRef.current) return;
+
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const text = formData.content;
+    const selectedText = text.substring(start, end);
+    
+    const newContent = 
+      text.substring(0, start) + 
+      prefix + 
+      (selectedText || '') + 
+      suffix + 
+      text.substring(end);
+
+    setFormData({ ...formData, content: newContent });
+
+    // Reset focus and selection
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        const newPos = start + prefix.length + (selectedText.length || 0) + suffix.length;
+        textareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
   };
 
   return (
@@ -139,20 +168,51 @@ export function EditorPage() {
                      <Eye className="w-3 h-3" />
                      معاينة
                    </button>
+                   <button
+                     onClick={() => setViewMode('split')}
+                     className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 hidden lg:flex", viewMode === 'split' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
+                   >
+                     <Layout className="w-3 h-3" />
+                     مشترك
+                   </button>
                  </div>
                }
             />
-            <CardContent className="p-0">
-               {viewMode === 'edit' ? (
-                 <Textarea
-                    placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات"
-                    className="min-h-[400px] font-mono leading-relaxed border-none rounded-none focus:border-none shadow-none bg-transparent"
-                    value={formData.content}
-                    onChange={e => setFormData({ ...formData, content: e.target.value })}
-                  />
-               ) : (
-                 <div className="min-h-[400px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">
+            <CardContent className="p-0 border-t border-border/40">
+               {viewMode === 'edit' && (
+                 <div className="flex flex-col">
+                    <MarkdownToolbar onInsert={handleInsertMarkdown} />
+                    <Textarea
+                      ref={textareaRef}
+                      placeholder="اكتب البرومبت هنا... استخدم {variable} لإضافة متغيرات"
+                      className="min-h-[500px] font-mono leading-relaxed border-none rounded-none focus:border-none shadow-none bg-transparent"
+                      value={formData.content}
+                      onChange={e => setFormData({ ...formData, content: e.target.value })}
+                    />
+                 </div>
+               )}
+
+               {viewMode === 'preview' && (
+                 <div className="min-h-[500px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">
                     <Markdown>{formData.content || '_لا يوجد محتوى للمعاينة..._'}</Markdown>
+                 </div>
+               )}
+
+               {viewMode === 'split' && (
+                 <div className="flex h-[600px] divide-x divide-x-reverse divide-border/40">
+                    <div className="flex-1 flex flex-col border-l border-border/40">
+                      <MarkdownToolbar onInsert={handleInsertMarkdown} />
+                      <Textarea
+                        ref={textareaRef}
+                        placeholder="اكتب هنا..."
+                        className="flex-1 font-mono leading-relaxed border-none rounded-none focus:border-none shadow-none bg-transparent p-6 resize-none"
+                        value={formData.content}
+                        onChange={e => setFormData({ ...formData, content: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex-1 p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/10 dark:bg-surface2-dark/10 overflow-y-auto">
+                      <Markdown>{formData.content || '_لا يوجد محتوى للمعاينة..._'}</Markdown>
+                    </div>
                  </div>
                )}
             </CardContent>

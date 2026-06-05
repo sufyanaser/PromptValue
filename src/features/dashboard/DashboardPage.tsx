@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { cn } from '../../lib/cn';
-import { LayoutDashboard, Star, Palette, Hash } from 'lucide-react';
+import { LayoutDashboard, Star, Palette, Hash, Plus } from 'lucide-react';
 import { useApp } from '../../app/app-provider';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { PromptEditorModal } from '../../components/prompts/PromptEditorModal';
 
 export function DashboardPage() {
   const { data } = useApp();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const stats = [
     { label: 'إجمالي البرومبتات', value: data.prompts.length, icon: LayoutDashboard, color: 'text-info' },
@@ -22,12 +26,27 @@ export function DashboardPage() {
         subtitle="نظرة تشغيلية سريعة على حالة مكتبة البرومبتات المحلية."
       />
 
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="إضافة برومبت جديد" maxWidth="7xl">
+         <PromptEditorModal onClose={() => setIsModalOpen(false)} />
+      </Modal>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <Card key={i} className="hover:scale-[1.02] transition-transform cursor-pointer">
-            <CardHeader title={stat.label} icon={stat.icon} />
-            <CardContent>
-              <div className={cn("text-4xl font-black", stat.color)}>{stat.value}</div>
+          <Card key={i} className="hover:scale-[1.02] transition-transform cursor-pointer overflow-hidden group">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 items-end order-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-40 text-right">{stat.label}</span>
+                  <div className={cn("text-5xl font-black", stat.color)}>{stat.value}</div>
+                </div>
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 order-1",
+                  stat.color.replace('text-', 'bg-') + '/10',
+                  stat.color
+                )}>
+                  <stat.icon className="w-6 h-6" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}

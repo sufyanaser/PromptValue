@@ -11,7 +11,7 @@ export function StatusBar() {
       theme === 'dark' ? "bg-shell-dark border-border-dark text-muted-dark" : "bg-shell-light border-border-light text-muted-light"
     )}>
       <div className="flex items-center gap-4">
-        <span>PromptVault v1.0.0</span>
+        <span>PromptVault v1.5.0 (Modal UX)</span>
       </div>
 
       <div className="flex items-center gap-2">

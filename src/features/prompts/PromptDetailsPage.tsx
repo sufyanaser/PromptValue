@@ -8,6 +8,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Copy, Edit, Star, Clock, User, Share2, AlertCircle, Calendar, Sparkles, Send, RefreshCw, MessageSquare } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { PromptVariablesPanel } from '../../components/prompts/PromptVariablesPanel';
+import { Modal } from '../../components/ui/Modal';
+import { PromptEditorModal } from '../../components/prompts/PromptEditorModal';
 
 export function PromptDetailsPage() {
   const { id } = useParams();
@@ -18,6 +20,7 @@ export function PromptDetailsPage() {
   const [aiResponse, setAiResponse] = useState('');
   const [aiInput, setAiInput] = useState('');
   const [aiProvider, setAiProvider] = useState<'gemini' | 'openai' | 'claude' | 'copilot'>('gemini');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const prompt = data.prompts.find(p => p.id === id);
 
@@ -87,15 +90,17 @@ export function PromptDetailsPage() {
               <Star className={cn("w-4 h-4 ml-2", prompt.isFavorite && "fill-accent text-accent")} />
               {prompt.isFavorite ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
             </Button>
-            <Link to={`/editor/${prompt.id}`}>
-              <Button>
-                <Edit className="w-4 h-4 ml-2" />
-                تعديل
-              </Button>
-            </Link>
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Edit className="w-4 h-4 ml-2" />
+              تعديل
+            </Button>
           </div>
         }
       />
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="تعديل البرومبت" maxWidth="7xl">
+         <PromptEditorModal promptId={prompt.id} onClose={() => setIsModalOpen(false)} />
+      </Modal>
 
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 lg:col-span-8 space-y-6">

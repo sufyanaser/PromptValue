@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import { useApp } from '../../app/app-provider';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
-import { Search, Filter, LayoutGrid, List, MoreVertical, Copy, Edit, Star, Trash2, Archive, ExternalLink } from 'lucide-react';
+import { Search, Filter, LayoutGrid, List, MoreVertical, Copy, Edit, Star, Trash2, Archive, ExternalLink, Plus } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Link } from 'react-router-dom';
+import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { PromptEditorModal } from '../../components/prompts/PromptEditorModal';
 
 export function PromptsPage() {
   const { data, toggleFavorite, deletePrompt } = useApp();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | undefined>();
 
   const filteredPrompts = data.prompts.filter(p =>
     p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -23,6 +28,18 @@ export function PromptsPage() {
         title="البرومبتات"
         subtitle="إدارة واستعراض جميع البرومبتات المحفوظة في مكتبتك."
       />
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editingId ? "تعديل البرومبت" : "إضافة برومبت جديد"}
+        maxWidth="7xl"
+      >
+        <PromptEditorModal 
+          promptId={editingId} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      </Modal>
 
       <div className="flex items-center justify-between p-2 bg-surface2-light dark:bg-surface2-dark rounded-2xl shadow-inner-sm">
         <div className="flex items-center gap-2 flex-1 px-4">
@@ -109,7 +126,12 @@ export function PromptsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button className="p-1.5 rounded-lg hover:bg-accent/10 hover:text-accent transition-colors"><Copy className="w-4 h-4" /></button>
-                        <button className="p-1.5 rounded-lg hover:bg-info/10 hover:text-info transition-colors"><Edit className="w-4 h-4" /></button>
+                        <button 
+                          onClick={() => { setEditingId(prompt.id); setIsModalOpen(true); }}
+                          className="p-1.5 rounded-lg hover:bg-info/10 hover:text-info transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => deletePrompt(prompt.id)}
                           className="p-1.5 rounded-lg hover:bg-danger/10 hover:text-danger transition-colors"
@@ -151,8 +173,11 @@ export function PromptsPage() {
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 bg-surface2-light dark:bg-surface2-dark rounded-xl hover:text-accent transition-colors">
-                      <Copy className="w-4 h-4" />
+                    <button 
+                      onClick={() => { setEditingId(prompt.id); setIsModalOpen(true); }}
+                      className="p-2 bg-surface2-light dark:bg-surface2-dark rounded-xl hover:text-accent transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
                     </button>
                     <button className="p-2 bg-accent text-white rounded-xl shadow-md shadow-accent/20">
                       <ExternalLink className="w-4 h-4" />
