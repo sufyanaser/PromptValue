@@ -26,7 +26,7 @@ async function startServer() {
         });
 
         const response = await ai.models.generateContent({
-          model: model || "gemini-3.5-flash",
+          model: model || "gemini-2.5-flash",
           contents: prompt,
           config: {
             systemInstruction: systemInstruction || "You are a helpful prompt engineering assistant.",
