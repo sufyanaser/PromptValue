@@ -172,8 +172,8 @@ export function NotepadView() {
   const handleFolderIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== 'image/png') {
-        showToast('يرجى اختيار ملف صورة PNG فقط', 'warning');
+      if (!file.type.startsWith('image/')) {
+        showToast('يرجى اختيار ملف صورة فقط', 'warning');
         return;
       }
       const reader = new FileReader();
@@ -553,33 +553,34 @@ export function NotepadView() {
         {selectedPrompt ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             
-            {/* Top Tab Bar matching mockup */}
-            <div className="h-[44px] bg-slate-100 dark:bg-surface2-dark/20 px-6 border-b border-border/20 flex items-end gap-1.5 overflow-x-auto shrink-0 select-none scrollbar-none">
-              {openTabs.map(tId => {
-                const prompt = data.prompts.find(p => p.id === tId);
-                if (!prompt) return null;
-                
-                const folderId = getFolderForPrompt(prompt);
-                const folder = AI_FOLDERS.find(f => f.id === folderId) || AI_FOLDERS[4];
-                const isActive = tId === selectedPromptId;
-                
-                return (
-                  <div key={tId} className="relative group/tab flex items-center mb-[-1px]">
-                    <button
-                      onClick={() => setSelectedPromptId(tId)}
-                      style={{
-                        backgroundColor: isActive ? folder.color : undefined,
-                        color: isActive ? '#ffffff' : undefined
-                      }}
-                      className={cn(
-                        "h-8 pl-8 pr-4 rounded-t-lg text-[10px] font-black flex items-center gap-2 transition-all cursor-pointer relative z-10 border border-b-0",
-                        isActive 
-                          ? "border-transparent shadow-sm" 
-                          : "bg-surface-light/40 dark:bg-surface-dark/40 border-border/20 text-muted-light dark:text-muted-dark hover:bg-surface-light/80 dark:hover:bg-surface-dark/80"
-                      )}
-                    >
-                      <span className="truncate max-w-[100px]">{prompt.title}</span>
-                    </button>
+             {/* Top Tab Bar matching mockup */}
+             <div className="h-[44px] bg-slate-100 dark:bg-surface2-dark/20 px-6 border-b border-border/20 flex items-end gap-1.5 overflow-x-auto shrink-0 select-none scrollbar-none">
+               {openTabs.map(tId => {
+                 const prompt = data.prompts.find(p => p.id === tId);
+                 if (!prompt) return null;
+                 
+                 const folderId = getFolderForPrompt(prompt);
+                 const folder = folders.find(f => f.id === folderId) || folders.find(f => f.id === 'other') || folders[4];
+                 const isActive = tId === selectedPromptId;
+                 
+                 return (
+                   <div key={tId} className="relative group/tab flex items-center mb-[-1px]">
+                     <button
+                       onClick={() => setSelectedPromptId(tId)}
+                       style={{
+                         backgroundColor: isActive ? folder.color : folder.color + '15',
+                         color: isActive ? '#ffffff' : folder.color,
+                         borderColor: isActive ? 'transparent' : folder.color + '30'
+                       }}
+                       className={cn(
+                         "h-8 pl-8 pr-4 rounded-t-lg text-[10px] font-black flex items-center gap-2 transition-all cursor-pointer relative z-10 border border-b-0",
+                         isActive 
+                           ? "shadow-sm" 
+                           : "hover:bg-surface-light/80 dark:hover:bg-surface-dark/80"
+                       )}
+                     >
+                       <span className="truncate max-w-[100px]">{prompt.title}</span>
+                     </button>
                     
                     {/* Close Tab Button */}
                     <button
@@ -897,7 +898,103 @@ export function NotepadView() {
           </div>
         )}
       </div>
+ 
+      {/* Folder Customization Modal */}
+      {editingFolder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 select-none">
+          <Card className="w-full max-w-md shadow-2xl border border-border/80 bg-surface-light dark:bg-surface-dark overflow-hidden text-right pointer-events-auto">
+            <CardHeader title="تخصيص المجلد" />
+            <CardContent className="space-y-4 pt-4">
+              {/* Folder Name */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold opacity-60">اسم المجلد</label>
+                <input
+                  type="text"
+                  value={folderEditName}
+                  onChange={e => setFolderEditName(e.target.value)}
+                  className="w-full h-11 px-4 rounded-xl border border-border/40 bg-surface2-light dark:bg-surface2-dark text-sm outline-none focus:border-accent text-slate-800 dark:text-slate-100"
+                  placeholder="مثال: برومبتات البرمجة..."
+                />
+              </div>
 
+              {/* Folder Color */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold opacity-60">اللون المختار</label>
+                <div className="flex flex-wrap gap-2">
+                  {['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899', '#6B7280'].map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setFolderEditColor(c)}
+                      className={cn(
+                        "w-8 h-8 rounded-full border-2 transition-all cursor-pointer",
+                        folderEditColor === c ? "border-accent scale-110" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                  {/* Custom color input */}
+                  <input
+                    type="color"
+                    value={folderEditColor}
+                    onChange={e => setFolderEditColor(e.target.value)}
+                    className="w-8 h-8 rounded-full border-2 border-transparent cursor-pointer overflow-hidden p-0 bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Folder Icon Upload */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold opacity-60 block">أيقونة المجلد</label>
+                <div className="flex items-center gap-3 bg-surface2-light dark:bg-surface2-dark p-3 rounded-xl border border-border/30">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center border border-border/50 bg-white dark:bg-surface-dark shrink-0">
+                    {folderEditIcon ? (
+                      <img src={folderEditIcon} alt="Icon Preview" className="w-8 h-8 object-contain" />
+                    ) : (
+                      <Folder className="w-8 h-8 text-slate-400" style={{ color: folderEditColor }} />
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="folder-icon-uploader"
+                      className="hidden"
+                      onChange={handleFolderIconUpload}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 text-[10px] font-bold cursor-pointer"
+                        onClick={() => document.getElementById('folder-icon-uploader')?.click()}
+                      >
+                        رفع صورة
+                      </Button>
+                      {folderEditIcon && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 text-[10px] font-bold text-danger hover:bg-danger/10 cursor-pointer"
+                          onClick={() => setFolderEditIcon('')}
+                        >
+                          مسح الأيقونة
+                        </Button>
+                      )}
+                    </div>
+                    <span className="text-[9px] opacity-45 font-bold">يمكنك اختيار أي صورة لتكون أيقونة المجلد.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button variant="ghost" className="flex-1 text-xs font-bold" onClick={() => setEditingFolder(null)}>إلغاء</Button>
+                <Button className="flex-1 bg-accent text-white text-xs font-bold shadow-lg shadow-accent/15" onClick={saveFolderEdits}>حفظ التغييرات</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
