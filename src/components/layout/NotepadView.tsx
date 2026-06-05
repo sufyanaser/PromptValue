@@ -755,11 +755,7 @@ ${textToImprove}`;
             </div>
 
             {/* Rich Editor Toolbar matching mockup */}
-<<<<<<< HEAD
             <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 select-none shrink-0 shadow-sm z-10">
-=======
-            <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex items-center justify-between gap-4 select-none shrink-0 shadow-sm z-10">
->>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
               
               {/* Left format/style helpers */}
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
@@ -1076,10 +1072,7 @@ ${textToImprove}`;
                   aiEnhancing && aiEnhancingProvider === 'openai' && "border border-emerald-500/30 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.05)]",
                   aiEnhancing && aiEnhancingProvider === 'claude' && "border border-orange-500/30 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.05)]"
                 )}>
-<<<<<<< HEAD
 
-=======
->>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
 
                   <div
                     ref={editorRef}
