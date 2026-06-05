@@ -384,6 +384,7 @@ ${textToImprove}`;
                title="نص البرومبت *" 
                subtitle="اكتب البرومبت واستخدم {variable} لإضافة متغيرات" 
                actions={
+<<<<<<< HEAD
                  <div className="flex flex-col items-end gap-1.5 shrink-0 select-none">
                    {/* View Switcher: Editor / Preview */}
                    <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
@@ -391,19 +392,32 @@ ${textToImprove}`;
                        type="button"
                        onClick={() => setViewMode('edit')}
                        className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
+=======
+                 <div className="flex flex-col items-end gap-1.5 shrink-0">
+                   <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40">
+                     <button
+                       onClick={() => setViewMode('edit')}
+                       className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2", viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
+>>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
                      >
                        <Code className="w-3.5 h-3.5" />
                        محرر
                      </button>
                      <button
+<<<<<<< HEAD
                        type="button"
                        onClick={() => setViewMode('preview')}
                        className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
+=======
+                       onClick={() => setViewMode('preview')}
+                       className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2", viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
+>>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
                      >
                        <Eye className="w-3.5 h-3.5" />
                        معاينة
                      </button>
                    </div>
+<<<<<<< HEAD
                    {/* AI Enhancer Buttons - Positioned cleanly under the switcher */}
                    {viewMode === 'edit' && hasAnyAi && (
                      <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-surface2-dark/60 border border-border/20 rounded-xl select-none transition-all duration-300">
@@ -473,6 +487,50 @@ ${textToImprove}`;
                            </span>
                          </button>
                        )}
+=======
+                   {hasAnyAi && (
+                     <div className="flex items-center gap-1.5 p-1 bg-white/70 dark:bg-slate-900/85 border border-border/30 rounded-full shadow-sm select-none">
+                              تحسين صياغة البرومبت عبر Gemini
+                            </span>
+                          </button>
+                        )}
+                        {isOpenAIActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleAiEnhance('openai')}
+                            disabled={aiEnhancing}
+                            className={cn(
+                              "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                              aiEnhancingProvider === 'openai' 
+                                ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-emerald-500/20 shadow-sm animate-pulse" 
+                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/20 hover:scale-105"
+                            )}
+                          >
+                            <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin text-emerald-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر OpenAI
+                            </span>
+                          </button>
+                        )}
+                        {isClaudeActive && (
+                          <button
+                            type="button"
+                            onClick={() => handleAiEnhance('claude')}
+                            disabled={aiEnhancing}
+                            className={cn(
+                              "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                              aiEnhancingProvider === 'claude' 
+                                ? "bg-orange-500/20 text-orange-500 border-orange-500/30 shadow-orange-500/20 shadow-sm animate-pulse" 
+                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-orange-500 hover:bg-orange-500/10 hover:border-orange-500/20 hover:scale-105"
+                            )}
+                          >
+                            <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin text-orange-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر Claude
+                            </span>
+                          </button>
+                        )}
+>>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
                      </div>
                    )}
                  </div>
@@ -717,7 +775,18 @@ ${textToImprove}`;
             <CardContent className="p-0">
                {viewMode === 'edit' ? (
                  <div className="relative p-4">
+<<<<<<< HEAD
 
+=======
+                            <Brain className={cn("w-4 h-4", aiEnhancingProvider === 'claude' && "animate-spin text-orange-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر Claude
+                            </span>
+                          </button>
+                        )}
+                     </div>
+                   )}
+>>>>>>> 9690aac291b9d1444f52dc409de6e556fb3f1bff
 
                    <input
                      id="editor-image-uploader"
