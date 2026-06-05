@@ -643,19 +643,23 @@ ${textToImprove}`;
                  <div className="relative p-4">
                    {/* Floating AI Enhancer Buttons */}
                    {hasAnyAi && (
-                     <div className="absolute top-8 left-8 flex items-center gap-1.5 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-border/40 rounded-xl shadow-lg z-30 opacity-70 hover:opacity-100 transition-all select-none">
-                        <div className="text-[9px] font-black px-2 text-muted-light dark:text-muted-dark border-l border-border/30">
-                          محسّن الذكاء الاصطناعي
-                        </div>
+                     <div className="absolute top-8 left-8 flex items-center gap-2 p-1.5 bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl border border-border/30 rounded-full shadow-lg z-30 transition-all duration-300 select-none group/pill hover:border-accent/30 shadow-black/5 hover:shadow-black/10">
                         {isGeminiActive && (
                           <button
                             type="button"
                             onClick={() => handleAiEnhance('gemini')}
                             disabled={aiEnhancing}
-                            className="p-1.5 hover:bg-info/10 hover:text-info text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                            className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                              aiEnhancingProvider === 'gemini' 
+                                ? "bg-indigo-500/20 text-indigo-500 border-indigo-500/30 shadow-indigo-500/20 shadow-md animate-pulse" 
+                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:scale-110"
+                            )}
                           >
-                            <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin text-info")} />
-                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر Gemini</span>
+                            <Sparkles className={cn("w-4 h-4", aiEnhancingProvider === 'gemini' && "animate-spin text-indigo-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر Gemini
+                            </span>
                           </button>
                         )}
                         {isOpenAIActive && (
@@ -663,10 +667,17 @@ ${textToImprove}`;
                             type="button"
                             onClick={() => handleAiEnhance('openai')}
                             disabled={aiEnhancing}
-                            className="p-1.5 hover:bg-success/10 hover:text-success text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                            className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                              aiEnhancingProvider === 'openai' 
+                                ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-emerald-500/20 shadow-md animate-pulse" 
+                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/20 hover:scale-110"
+                            )}
                           >
-                            <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin text-success")} />
-                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر OpenAI</span>
+                            <Cpu className={cn("w-4 h-4", aiEnhancingProvider === 'openai' && "animate-spin text-emerald-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر OpenAI
+                            </span>
                           </button>
                         )}
                         {isClaudeActive && (
@@ -674,10 +685,17 @@ ${textToImprove}`;
                             type="button"
                             onClick={() => handleAiEnhance('claude')}
                             disabled={aiEnhancing}
-                            className="p-1.5 hover:bg-accent/10 hover:text-accent text-slate-500 rounded-lg transition-all cursor-pointer relative group flex items-center justify-center"
+                            className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                              aiEnhancingProvider === 'claude' 
+                                ? "bg-orange-500/20 text-orange-500 border-orange-500/30 shadow-orange-500/20 shadow-md animate-pulse" 
+                                : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-orange-500 hover:bg-orange-500/10 hover:border-orange-500/20 hover:scale-110"
+                            )}
                           >
-                            <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin text-accent")} />
-                            <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950 text-white px-2 py-1 rounded shadow-md whitespace-nowrap">تحسين عبر Claude</span>
+                            <Brain className={cn("w-4 h-4", aiEnhancingProvider === 'claude' && "animate-spin text-orange-500")} />
+                            <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                              تحسين صياغة البرومبت عبر Claude
+                            </span>
                           </button>
                         )}
                      </div>
@@ -700,7 +718,10 @@ ${textToImprove}`;
                         "min-h-[350px] leading-relaxed border border-border/20 rounded-xl p-4 focus:outline-none bg-transparent overflow-y-auto text-right w-full transition-all duration-500",
                         fontFamily,
                         fontSize,
-                        aiEnhancing && "border-accent/40 bg-accent/[0.01] animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.05)]"
+                        aiEnhancing && "animate-pulse",
+                        aiEnhancing && aiEnhancingProvider === 'gemini' && "border-indigo-500/40 bg-indigo-500/[0.01] shadow-[0_0_20px_rgba(99,102,241,0.08)]",
+                        aiEnhancing && aiEnhancingProvider === 'openai' && "border-emerald-500/40 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.08)]",
+                        aiEnhancing && aiEnhancingProvider === 'claude' && "border-orange-500/40 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.08)]"
                       )}
                       style={{ direction: 'rtl' }}
                     />
@@ -708,15 +729,20 @@ ${textToImprove}`;
                       عدد الأحرف: {charCount}
                     </div>
 
-                    {/* AI Loading/Generating Overlay */}
-                    {aiEnhancing && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-white/40 dark:bg-surface-dark/40 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
-                        <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border border-border/50 shadow-xl">
-                          <RefreshCw className="w-4 h-4 text-accent animate-spin" />
-                          <span className="text-xs font-black">جاري تحسين البرومبت بالذكاء الاصطناعي...</span>
-                        </div>
-                      </div>
-                    )}
+                     {/* AI Loading/Generating Overlay */}
+                     {aiEnhancing && (
+                       <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-surface-dark/30 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
+                         <div className={cn(
+                           "flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border shadow-xl transition-all duration-300",
+                           aiEnhancingProvider === 'gemini' && "border-indigo-500/30 text-indigo-500 shadow-indigo-500/5",
+                           aiEnhancingProvider === 'openai' && "border-emerald-500/30 text-emerald-500 shadow-emerald-500/5",
+                           aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
+                         )}>
+                           <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                           <span className="text-xs font-black">جاري تحسين الصياغة بالذكاء الاصطناعي...</span>
+                         </div>
+                       </div>
+                     )}
                  </div>
                ) : (
                  <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto">

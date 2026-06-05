@@ -6,7 +6,7 @@ import {
   Folder, FolderOpen, FileText, Plus, Bold, Italic, List, Code, 
   Link as LinkIcon, Image, Heading, AlignLeft, AlignCenter, AlignRight, 
   AlignJustify, Eye, Edit, ChevronDown, ChevronLeft, Check, X, Undo, Redo, 
-  Palette, Highlighter, Trash2, Star, Sliders
+  Palette, Highlighter, Trash2, Star, Sliders, Sparkles, Cpu, Brain, RefreshCw
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import Markdown from 'react-markdown';
@@ -120,6 +120,107 @@ export function NotepadView() {
     else if (alignType === 'center') execFormat('justifyCenter');
     else if (alignType === 'left') execFormat('justifyLeft');
     else if (alignType === 'justify') execFormat('justifyFull');
+  };
+
+  // AI Enhancer States & Helpers
+  const isGeminiActive = !!data.settings.geminiApiKey?.trim();
+  const isOpenAIActive = !!data.settings.openaiApiKey?.trim();
+  const isClaudeActive = !!data.settings.claudeApiKey?.trim();
+  const hasAnyAi = isGeminiActive || isOpenAIActive || isClaudeActive;
+
+  const [aiEnhancing, setAiEnhancing] = useState(false);
+  const [aiEnhancingProvider, setAiEnhancingProvider] = useState<string | null>(null);
+
+  const getTextFromHtml = (html: string) => {
+    if (typeof document === 'undefined') return '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  const simulateTyping = (text: string) => {
+    let index = 0;
+    const step = Math.max(1, Math.ceil(text.length / 100));
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        const nextContent = text.slice(0, index + step);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = nextContent;
+        }
+        if (selectedPromptId) {
+          updatePrompt(selectedPromptId, { content: nextContent });
+        }
+        index += step;
+      } else {
+        clearInterval(interval);
+        if (editorRef.current) {
+          editorRef.current.innerHTML = text;
+        }
+        if (selectedPromptId) {
+          updatePrompt(selectedPromptId, { content: text });
+        }
+        showToast('تم تحسين البرومبت بنجاح!', 'success');
+      }
+    }, 20);
+  };
+
+  const handleAiEnhance = async (provider: 'gemini' | 'openai' | 'claude') => {
+    if (!selectedPrompt) return;
+    const textToImprove = getTextFromHtml(selectedPrompt.content);
+    if (!textToImprove.trim()) {
+      showToast('يرجى كتابة نص البرومبت أولاً ليتمكن المساعد من تحسينه.', 'warning');
+      return;
+    }
+
+    setAiEnhancing(true);
+    setAiEnhancingProvider(provider);
+
+    const apiKey = 
+      provider === 'gemini' 
+        ? data.settings.geminiApiKey 
+        : provider === 'openai' 
+        ? data.settings.openaiApiKey 
+        : data.settings.claudeApiKey;
+
+    const input = `أنت خبير هندسة برومبتات (Prompt Engineer) محترف ومتخصص في كتابة التعليمات البرمجية للذكاء الاصطناعي.
+مهمتك هي إعادة صياغة وتحسين وتوسيع البرومبت التالي ليعطي أفضل وأدق النتائج الممكنة.
+- ركّز على الوضوح والدقة والترتيب الهيكلي.
+- حافظ على المتغيرات المكتوبة بين القوسين المجعدين مثل {variable} كما هي تماماً ولا تغير أسمائها أو تحذفها.
+- أرجع فقط نص البرومبت المحسن النهائي مباشرة بدون أي مقدمات أو مؤخرات أو شروحات إضافية.
+
+البرومبت المراد تحسينه:
+${textToImprove}`;
+
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: input,
+          provider,
+          apiKey
+        }),
+      });
+
+      const resData = await response.json();
+      if (resData.error) throw new Error(resData.error);
+      
+      const enhancedText = resData.text;
+      if (enhancedText) {
+        simulateTyping(enhancedText);
+      } else {
+        throw new Error('لم يتم إرجاع أي نص');
+      }
+    } catch (error: any) {
+      console.error(error);
+      showToast(`فشل التحسين: ${error.message || 'حدث خطأ غير معروف'}`, 'danger');
+    } finally {
+      setAiEnhancing(false);
+      setAiEnhancingProvider(null);
+    }
   };
 
   // Prompt Rename States
@@ -862,7 +963,73 @@ export function NotepadView() {
 
               {/* Text Editor content */}
               {viewMode === 'edit' ? (
-                <div className="flex-1 flex flex-col min-h-[400px]">
+                <div className={cn(
+                  "flex-1 flex flex-col min-h-[400px] relative transition-all duration-500 rounded-xl p-2",
+                  aiEnhancing && "animate-pulse",
+                  aiEnhancing && aiEnhancingProvider === 'gemini' && "border border-indigo-500/30 bg-indigo-500/[0.01] shadow-[0_0_20px_rgba(99,102,241,0.05)]",
+                  aiEnhancing && aiEnhancingProvider === 'openai' && "border border-emerald-500/30 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.05)]",
+                  aiEnhancing && aiEnhancingProvider === 'claude' && "border border-orange-500/30 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.05)]"
+                )}>
+                  {/* Floating AI Enhancer Buttons */}
+                  {hasAnyAi && (
+                    <div className="absolute top-4 left-4 flex items-center gap-2 p-1.5 bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl border border-border/30 rounded-full shadow-lg z-30 transition-all duration-300 select-none group/pill hover:border-accent/30 shadow-black/5 hover:shadow-black/10">
+                       {isGeminiActive && (
+                         <button
+                           type="button"
+                           onClick={() => handleAiEnhance('gemini')}
+                           disabled={aiEnhancing}
+                           className={cn(
+                             "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                             aiEnhancingProvider === 'gemini' 
+                               ? "bg-indigo-500/20 text-indigo-500 border-indigo-500/30 shadow-indigo-500/20 shadow-md animate-pulse" 
+                               : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:scale-110"
+                           )}
+                         >
+                           <Sparkles className={cn("w-4 h-4", aiEnhancingProvider === 'gemini' && "animate-spin text-indigo-500")} />
+                           <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                             تحسين صياغة البرومبت عبر Gemini
+                           </span>
+                         </button>
+                       )}
+                       {isOpenAIActive && (
+                         <button
+                           type="button"
+                           onClick={() => handleAiEnhance('openai')}
+                           disabled={aiEnhancing}
+                           className={cn(
+                             "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                             aiEnhancingProvider === 'openai' 
+                               ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-emerald-500/20 shadow-md animate-pulse" 
+                               : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/20 hover:scale-110"
+                           )}
+                         >
+                           <Cpu className={cn("w-4 h-4", aiEnhancingProvider === 'openai' && "animate-spin text-emerald-500")} />
+                           <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                             تحسين صياغة البرومبت عبر OpenAI
+                           </span>
+                         </button>
+                       )}
+                       {isClaudeActive && (
+                         <button
+                           type="button"
+                           onClick={() => handleAiEnhance('claude')}
+                           disabled={aiEnhancing}
+                           className={cn(
+                             "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
+                             aiEnhancingProvider === 'claude' 
+                               ? "bg-orange-500/20 text-orange-500 border-orange-500/30 shadow-orange-500/20 shadow-md animate-pulse" 
+                               : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-orange-500 hover:bg-orange-500/10 hover:border-orange-500/20 hover:scale-110"
+                           )}
+                         >
+                           <Brain className={cn("w-4 h-4", aiEnhancingProvider === 'claude' && "animate-spin text-orange-500")} />
+                           <span className="absolute bottom-full mb-2.5 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
+                             تحسين صياغة البرومبت عبر Claude
+                           </span>
+                         </button>
+                       )}
+                    </div>
+                  )}
+
                   <div
                     ref={editorRef}
                     contentEditable
@@ -877,9 +1044,24 @@ export function NotepadView() {
                     placeholder="اكتب البرومبت هنا..."
                   />
                   <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between">
-                    <span>عدد الأحرف: {selectedPrompt.content.length}</span>
+                    <span>عدد الأحرف: {selectedPrompt ? selectedPrompt.content.length : 0}</span>
                     <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> تم الحفظ تلقائياً في المتصفح</span>
                   </div>
+
+                  {/* AI Loading/Generating Overlay */}
+                  {aiEnhancing && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-surface-dark/30 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
+                      <div className={cn(
+                        "flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border shadow-xl transition-all duration-300",
+                        aiEnhancingProvider === 'gemini' && "border-indigo-500/30 text-indigo-500 shadow-indigo-500/5",
+                        aiEnhancingProvider === 'openai' && "border-emerald-500/30 text-emerald-500 shadow-emerald-500/5",
+                        aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
+                      )}>
+                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                        <span className="text-xs font-black">جاري تحسين الصياغة بالذكاء الاصطناعي...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className={cn(
