@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain, dialog, nativeTheme, Menu } = require('elec
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
+const { GoogleGenAI } = require('@google/genai');
+const OpenAI = require('openai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -69,6 +72,66 @@ app.on('window-all-closed', () => {
 
 // IPC Implementation for Storage & File Dialogs (Backend for v1)
 ipcMain.handle('app:version', () => app.getVersion());
+
+ipcMain.handle('ai:generate', async (event, { prompt, systemInstruction, apiKey, provider = 'gemini', model }) => {
+  try {
+    if (provider === 'gemini') {
+      const finalApiKey = apiKey || process.env.GEMINI_API_KEY;
+      if (!finalApiKey) throw new Error("Gemini API Key is required.");
+
+      const ai = new GoogleGenAI({ 
+        apiKey: finalApiKey,
+        httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+      });
+
+      const response = await ai.models.generateContent({
+        model: model || "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: systemInstruction || "You are a helpful prompt engineering assistant.",
+        },
+      });
+
+      return { text: response.text };
+    }
+
+    if (provider === 'openai' || provider === 'copilot') {
+      const finalApiKey = apiKey || process.env.OPENAI_API_KEY;
+      if (!finalApiKey) throw new Error("OpenAI API Key is required.");
+
+      const openai = new OpenAI({ apiKey: finalApiKey });
+      const response = await openai.chat.completions.create({
+        model: model || (provider === 'copilot' ? "gpt-4o" : "gpt-3.5-turbo"),
+        messages: [
+          { role: "system", content: systemInstruction || "You are a helpful prompt engineering assistant." },
+          { role: "user", content: prompt }
+        ],
+      });
+
+      return { text: response.choices[0].message?.content || "" };
+    }
+
+    if (provider === 'claude') {
+      const finalApiKey = apiKey || process.env.ANTHROPIC_API_KEY;
+      if (!finalApiKey) throw new Error("Anthropic API Key is required.");
+
+      const anthropic = new Anthropic({ apiKey: finalApiKey });
+      const response = await anthropic.messages.create({
+        model: model || "claude-3-5-sonnet-20240620",
+        max_tokens: 1024,
+        system: systemInstruction || "You are a helpful prompt engineering assistant.",
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      return { text: response.content[0].text };
+    }
+
+    throw new Error("Unsupported provider");
+  } catch (error) {
+    console.error("AI Generation Error in Main Process:", error);
+    return { error: error.message || "Failed to generate content" };
+  }
+});
 
 ipcMain.handle('dialog:selectDirectory', async () => {
   const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];

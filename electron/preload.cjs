@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('PromptVault', {
     exportPrompts: (format) => ipcRenderer.invoke('files:export', format),
     selectDirectory: () => ipcRenderer.invoke('dialog:selectDirectory')
   },
+  ai: {
+    generate: (options) => ipcRenderer.invoke('ai:generate', options)
+  },
   theme: {
     setTheme: (theme) => ipcRenderer.invoke('theme:set', theme)
   },
@@ -29,3 +32,4 @@ contextBridge.exposeInMainWorld('PromptVault', {
     relaunch: () => ipcRenderer.send('updater:relaunch')
   }
 });
+

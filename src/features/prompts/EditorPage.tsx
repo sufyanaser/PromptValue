@@ -100,17 +100,27 @@ export function EditorPage() {
 ${textToImprove}`;
 
     try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let resData;
+      const pv = (window as any).PromptVault;
+      if (pv && pv.ai && pv.ai.generate) {
+        resData = await pv.ai.generate({
           prompt: input,
           provider,
           apiKey
-        }),
-      });
+        });
+      } else {
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: input,
+            provider,
+            apiKey
+          }),
+        });
+        resData = await response.json();
+      }
 
-      const resData = await response.json();
       if (resData.error) throw new Error(resData.error);
       
       const enhancedText = resData.text;

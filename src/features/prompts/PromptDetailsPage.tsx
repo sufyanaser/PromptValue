@@ -91,16 +91,26 @@ export function PromptDetailsPage() {
 
     setAiLoading(true);
     try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let resData;
+      const pv = (window as any).PromptVault;
+      if (pv && pv.ai && pv.ai.generate) {
+        resData = await pv.ai.generate({
           prompt: input,
           provider: aiProvider,
           apiKey: getApiKey(aiProvider)
-        }),
-      });
-      const resData = await response.json();
+        });
+      } else {
+        const response = await fetch('/api/ai/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: input,
+            provider: aiProvider,
+            apiKey: getApiKey(aiProvider)
+          }),
+        });
+        resData = await response.json();
+      }
       if (resData.error) throw new Error(resData.error);
       setAiResponse(resData.text);
       if (action === 'chat') setAiInput('');
