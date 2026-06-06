@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Palette, Plus, Search, MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Button } from '../../components/ui/Button';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 import { getUniqueColor, PRESET_COLORS } from '../../lib/colors';
 
@@ -81,73 +82,87 @@ export function CategoriesPage() {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         {data.categories.map(cat => {
-           const count = getPromptCount(cat.id);
-           return (
-             <Card key={cat.id} className="hover:scale-[1.02] transition-all cursor-pointer">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between mb-4">
-                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}20` }}>
-                        <Palette className="w-5 h-5" style={{ color: cat.color }} />
-                     </div>
-                     <div className="flex gap-1">
-                        <button onClick={() => openEditModal(cat)} className="p-1.5 opacity-40 hover:opacity-100 text-info transition-opacity cursor-pointer"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(cat.id)} className="p-1.5 opacity-40 hover:opacity-100 text-danger transition-opacity cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                     </div>
-                  </div>
-                  <h3 className="text-lg font-black mb-1">{cat.name}</h3>
-                  <p className="text-xs text-muted-light dark:text-muted-dark font-medium mb-4 line-clamp-2 h-8">{cat.description}</p>
-                  <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                     <span className="text-[10px] font-black uppercase text-accent">{t('prompts.promptsCount').replace('{count}', count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'))}</span>
-                     <span className="text-[10px] opacity-40 font-bold">{new Date(cat.updatedAt || new Date()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
-                  </div>
-                </CardContent>
-             </Card>
-           );
-         })}
-      </div>
+      {data.categories.length === 0 ? (
+        <Card className="p-8">
+          <EmptyState
+            icon={Palette}
+            title={t('emptyStates.noCategoriesTitle')}
+            description={t('emptyStates.noCategoriesDesc')}
+            actionLabel={t('emptyStates.createFirstCategoryBtn')}
+            onAction={openCreateModal}
+          />
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+             {data.categories.map(cat => {
+               const count = getPromptCount(cat.id);
+               return (
+                 <Card key={cat.id} className="hover:scale-[1.02] transition-all cursor-pointer">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}20` }}>
+                            <Palette className="w-5 h-5" style={{ color: cat.color }} />
+                         </div>
+                         <div className="flex gap-1">
+                            <button onClick={() => openEditModal(cat)} className="p-1.5 opacity-40 hover:opacity-100 text-info transition-opacity cursor-pointer"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(cat.id)} className="p-1.5 opacity-40 hover:opacity-100 text-danger transition-opacity cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                         </div>
+                      </div>
+                      <h3 className="text-lg font-black mb-1">{cat.name}</h3>
+                      <p className="text-xs text-muted-light dark:text-muted-dark font-medium mb-4 line-clamp-2 h-8">{cat.description}</p>
+                      <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                         <span className="text-[10px] font-black uppercase text-accent">{t('prompts.promptsCount').replace('{count}', count.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US'))}</span>
+                         <span className="text-[10px] opacity-40 font-bold">{new Date(cat.updatedAt || new Date()).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
+                      </div>
+                    </CardContent>
+                 </Card>
+               );
+             })}
+          </div>
 
-      <Card>
-        <CardHeader title={t('categories.title')} />
-        <div className="overflow-x-auto">
-           <table className="w-full text-start">
-              <thead>
-                <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black tracking-widest text-muted-light dark:text-muted-dark border-b border-border/40 uppercase">
-                  <th className="px-6 py-4">{t('categories.nameLabel')}</th>
-                  <th className="px-6 py-4">{t('categories.descLabel')}</th>
-                  <th className="px-6 py-4">{t('categories.promptCount')}</th>
-                  <th className="px-6 py-4 text-center">{t('categories.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/20">
-                {data.categories.map(cat => {
-                  const count = getPromptCount(cat.id);
-                  return (
-                    <tr key={cat.id} className="hover:bg-surface2-light/30">
-                      <td className="px-6 py-4 flex items-center gap-3">
-                         <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                         <span className="text-sm font-bold">{cat.name}</span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-medium opacity-60">
-                        {cat.description}
-                      </td>
-                      <td className="px-6 py-4 text-xs font-black">
-                        {count}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                           <button onClick={() => openEditModal(cat)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all cursor-pointer"><Edit className="w-4 h-4" /></button>
-                           <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
+          <Card>
+            <CardHeader title={t('categories.title')} />
+            <div className="overflow-x-auto">
+               <table className="w-full text-start">
+                  <thead>
+                    <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black tracking-widest text-muted-light dark:text-muted-dark border-b border-border/40 uppercase">
+                      <th className="px-6 py-4">{t('categories.nameLabel')}</th>
+                      <th className="px-6 py-4">{t('categories.descLabel')}</th>
+                      <th className="px-6 py-4">{t('categories.promptCount')}</th>
+                      <th className="px-6 py-4 text-center">{t('categories.actions')}</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-           </table>
-        </div>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-border/20">
+                    {data.categories.map(cat => {
+                      const count = getPromptCount(cat.id);
+                      return (
+                        <tr key={cat.id} className="hover:bg-surface2-light/30">
+                          <td className="px-6 py-4 flex items-center gap-3">
+                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                             <span className="text-sm font-bold">{cat.name}</span>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-medium opacity-60">
+                            {cat.description}
+                          </td>
+                          <td className="px-6 py-4 text-xs font-black">
+                            {count}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                               <button onClick={() => openEditModal(cat)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all cursor-pointer"><Edit className="w-4 h-4" /></button>
+                               <button onClick={() => handleDelete(cat.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+               </table>
+            </div>
+          </Card>
+        </>
+      )}
 
       {/* Modal Dialog */}
       {isModalOpen && (

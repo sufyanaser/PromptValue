@@ -11,12 +11,14 @@ import {
   Save, X, History, Variable, Info, CheckCircle2, Eye, Code, Bold, Italic, Underline, 
   Link as LinkIcon, Quote, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, 
   AlignJustify, Strikethrough, ChevronLeft, GripVertical, Check, MessageSquare, Activity, 
-  Image, Undo, Redo, Palette, Highlighter, Heading, Cpu, Brain, RefreshCw, Sparkles
+  Image, Undo, Redo, Palette, Highlighter, Heading, Cpu, Brain, RefreshCw, Sparkles,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { Prompt } from '../../types';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export function EditorPage() {
   const { id } = useParams();
@@ -24,6 +26,19 @@ export function EditorPage() {
   const { data, addPrompt, updatePrompt, showToast, t, lang } = useApp();
   const [aiEnhancing, setAiEnhancing] = useState(false);
   const [aiEnhancingProvider, setAiEnhancingProvider] = useState<string | null>(null);
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+
+  const [isFocusMode, setIsFocusMode] = useState(() => {
+    return localStorage.getItem('promptvault_editor_focus_mode') === 'true';
+  });
+
+  const toggleFocusMode = () => {
+    setIsFocusMode(prev => {
+      const next = !prev;
+      localStorage.setItem('promptvault_editor_focus_mode', String(next));
+      return next;
+    });
+  };
 
   const isGeminiActive = !!data.settings.geminiApiKey?.trim();
   const isOpenAIActive = !!data.settings.openaiApiKey?.trim();
@@ -297,9 +312,9 @@ ${textToImprove}`;
   }, [lang]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-4">
       {/* Breadcrumb Header */}
-      <div className="text-xs font-bold opacity-50 flex items-center gap-1.5 mb-2 select-none">
+      <div className="text-xs font-bold opacity-50 flex items-center gap-1.5 mb-1 select-none text-start">
         <Link to="/prompts" className="hover:text-accent">{t('sidebar.prompts')}</Link>
         <ChevronLeft className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
         <span>{t('editor.editPrompt')}</span>
@@ -323,352 +338,299 @@ ${textToImprove}`;
         }
       />
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-6 items-start">
         
         {/* Main Content Area (Left) */}
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader 
-              title={t('editor.promptContent')} 
-              subtitle={t('editor.enterDetails')}
-              actions={
-                <div className="flex items-center gap-3">
-                  {/* Autosave badge matching Image 4 */}
-                  <div className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
-                    <Check className="w-3 h-3" />
-                    <span>{t('editor.autosaved')}</span>
-                    <span className="opacity-60">{autoSavedTime}</span>
+        <div className={cn(
+          "col-span-12 space-y-4 transition-all duration-300",
+          isFocusMode ? "" : "lg:col-span-8"
+        )}>
+          {/* Metadata Card: Title, category, tags, author, source */}
+          {!isFocusMode && (
+            <Card className="bg-white dark:bg-surface-dark border-border/40 shadow-xs">
+              <CardHeader 
+                title={t('editor.promptContent')} 
+                subtitle={t('editor.enterDetails')}
+                actions={
+                  <div className="flex items-center gap-3">
+                    {/* Autosave badge */}
+                    <div className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full select-none">
+                      <Check className="w-3 h-3" />
+                      <span>{t('editor.autosaved')}</span>
+                      <span className="opacity-60">{autoSavedTime}</span>
+                    </div>
                   </div>
-                </div>
-              }
-            />
-            <CardContent className="space-y-4">
-              <Input
-                label={t('editor.titleLabel')}
-                placeholder={t('editor.titlePlaceholder')}
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                }
               />
+              <CardContent className="space-y-4">
+                <Input
+                  label={t('editor.titleLabel')}
+                  placeholder={t('editor.titlePlaceholder')}
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                />
 
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label={t('editor.category')}
-                  value={formData.categoryId}
-                  onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
-                  options={data.categories.map(c => ({ value: c.id, label: c.name }))}
-                />
-                <Input
-                  label={t('editor.tagsLabel')}
-                  placeholder={t('editor.tagsPlaceholder')}
-                  value={formData.tags}
-                  onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Select
+                    label={t('editor.category')}
+                    value={formData.categoryId}
+                    onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
+                    options={data.categories.map(c => ({ value: c.id, label: c.name }))}
+                  />
+                  <Input
+                    label={t('editor.tagsLabel')}
+                    placeholder={t('editor.tagsPlaceholder')}
+                    value={formData.tags}
+                    onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label={t('editor.authorLabel')}
-                  placeholder={lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi'}
-                  value={formData.author}
-                  onChange={e => setFormData({ ...formData, author: e.target.value })}
-                />
-                <Input
-                  label={t('editor.sourceLabel')}
-                  placeholder={lang === 'ar' ? 'مكتبة الفريق' : 'Team Library'}
-                  value={formData.source}
-                  onChange={e => setFormData({ ...formData, source: e.target.value })}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label={t('editor.authorLabel')}
+                    placeholder={lang === 'ar' ? 'أحمد النعيمي' : 'Ahmed Al-Nuaimi'}
+                    value={formData.author}
+                    onChange={e => setFormData({ ...formData, author: e.target.value })}
+                  />
+                  <Input
+                    label={t('editor.sourceLabel')}
+                    placeholder={lang === 'ar' ? 'مكتبة الفريق' : 'Team Library'}
+                    value={formData.source}
+                    onChange={e => setFormData({ ...formData, source: e.target.value })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Text Area Card with Rich Toolbar */}
-          <Card className="overflow-hidden bg-white dark:bg-surface-dark border-border/40">
+          <Card className="overflow-hidden bg-white dark:bg-surface-dark border-border/40 shadow-xs">
             <CardHeader 
-               title={t('editor.contentLabel')} 
-               subtitle={t('editor.contentSubtitle')} 
+               title={isFocusMode ? (formData.title || t('editor.untitled')) : t('editor.contentLabel')} 
+               subtitle={isFocusMode ? (lang === 'ar' ? 'وضع التركيز نشط - تحرير محتوى البرومبت' : 'Focus Mode active - editing prompt content') : t('editor.contentSubtitle')} 
                actions={
-                 <div className="flex flex-col items-end gap-1.5 shrink-0 select-none">
-                   {/* View Switcher: Editor / Preview */}
-                   <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
-                     <button
-                       type="button"
-                       onClick={() => setViewMode('edit')}
-                       className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
-                     >
-                       <Code className="w-3.5 h-3.5" />
-                       {t('editor.modeEditor')}
-                     </button>
-                     <button
-                       type="button"
-                       onClick={() => setViewMode('preview')}
-                       className={cn("px-4 py-2 rounded-lg text-[10px] font-black transition-all flex items-center gap-2 cursor-pointer", viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
-                     >
-                       <Eye className="w-3.5 h-3.5" />
-                       {t('editor.modePreview')}
-                     </button>
-                   </div>
-                   {/* AI Enhancer Buttons - Positioned cleanly under the switcher */}
-                   {viewMode === 'edit' && hasAnyAi && (
-                     <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-surface2-dark/60 border border-border/20 rounded-xl select-none transition-all duration-300">
-                       {isGeminiActive && (
-                         <button
-                           type="button"
-                           onClick={() => handleAiEnhance('gemini')}
-                           disabled={aiEnhancing}
-                           className={cn(
-                             "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                             aiEnhancingProvider === 'gemini'
-                               ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
-                               : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
-                           )}
-                           title={t('editor.enhanceGemini')}
-                         >
-                           <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin")} />
-                           <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                             <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                           </span>
-                           <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             {t('editor.geminiReady')}
-                           </span>
-                         </button>
-                       )}
-                       {isOpenAIActive && (
-                         <button
-                           type="button"
-                           onClick={() => handleAiEnhance('openai')}
-                           disabled={aiEnhancing}
-                           className={cn(
-                             "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                             aiEnhancingProvider === 'openai'
-                               ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
-                               : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
-                           )}
-                           title={t('editor.enhanceOpenAI')}
-                         >
-                           <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin")} />
-                           <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                             <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                           </span>
-                           <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             {t('editor.openaiReady')}
-                           </span>
-                         </button>
-                       )}
-                       {isClaudeActive && (
-                         <button
-                           type="button"
-                           onClick={() => handleAiEnhance('claude')}
-                           disabled={aiEnhancing}
-                           className={cn(
-                             "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                             aiEnhancingProvider === 'claude'
-                               ? "bg-orange-500 text-white border-orange-600 shadow-sm"
-                               : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
-                           )}
-                           title={t('editor.enhanceClaude')}
-                         >
-                           <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin")} />
-                           <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                             <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                           </span>
-                           <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                             {t('editor.claudeReady')}
-                           </span>
-                         </button>
-                       )}
+                 <div className="flex items-center gap-2 select-none">
+                    {/* Focus Mode Button */}
+                    <button
+                      type="button"
+                      onClick={toggleFocusMode}
+                      className={cn(
+                        "px-3 py-1.5 sm:px-3.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-1.5 border cursor-pointer",
+                        isFocusMode 
+                          ? "bg-accent/10 text-accent border-accent/30" 
+                          : "bg-surface2-light dark:bg-surface2-dark border-border/40 hover:bg-border/10 text-muted-light dark:text-muted-dark hover:text-text-light dark:hover:text-text-dark"
+                      )}
+                      title={isFocusMode ? t('editor.exitFocusMode') : t('editor.focusMode')}
+                    >
+                      {isFocusMode ? <Minimize2 className="w-3.5 h-3.5 text-accent" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                      <span className="hidden sm:inline">{isFocusMode ? t('editor.exitFocusMode') : t('editor.focusMode')}</span>
+                    </button>
 
-                     </div>
-                   )}
+                    {/* View Switcher: Editor / Preview */}
+                    <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('edit')}
+                        className={cn("px-3.5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
+                      >
+                        <Code className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{t('editor.modeEditor')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('preview')}
+                        className={cn("px-3.5 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100")}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{t('editor.modePreview')}</span>
+                      </button>
+                    </div>
                  </div>
                }
             />
 
-            {/* Rich formatting toolbar from Image 4 */}
+            {/* Rich formatting toolbar */}
             {viewMode === 'edit' && (
-              <div className="flex flex-wrap gap-1 p-2 bg-surface2-light dark:bg-surface2-dark/50 border-y border-border/40 select-none">
-                {/* Image upload helper */}
-                <button 
-                  onClick={handleImageToolbarClick} 
-                  type="button"
-                  title={t('editor.tooltipUploadImage')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
-                >
-                  <Image className="w-4 h-4 opacity-70" />
-                </button>
-
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
-
-                {/* Undo / Redo */}
-                <button 
-                  onClick={handleUndo} 
-                  type="button"
-                  title={t('editor.tooltipUndo')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
-                >
-                  <Undo className="w-4 h-4 opacity-70" />
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  type="button"
-                  title={t('editor.tooltipRedo')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
-                >
-                  <Redo className="w-4 h-4 opacity-70" />
-                </button>
-
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
-
-                {/* Font Family selector */}
-                <select 
-                  value={fontFamily}
-                  onChange={e => setFontFamily(e.target.value)}
-                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
-                >
-                  <option value="font-sans">{t('editor.fontSans')}</option>
-                  <option value="font-mono">{t('editor.fontMono')}</option>
-                  <option value="font-serif">{t('editor.fontSerif')}</option>
-                </select>
-
-                {/* Font Size selector */}
-                <select 
-                  value={fontSize}
-                  onChange={e => setFontSize(e.target.value)}
-                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
-                >
-                  <option value="text-xs">12px</option>
-                  <option value="text-sm">14px</option>
-                  <option value="text-base">16px</option>
-                  <option value="text-lg">18px</option>
-                  <option value="text-xl">20px</option>
-                </select>
-
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
-
-                {/* Text Color Picker (Pen) */}
-                <div className="relative">
+              <div className="flex flex-wrap gap-1.5 p-2 bg-white dark:bg-surface-dark border-y border-border/40 select-none sticky top-[80px] z-30 shadow-xs transition-all">
+                {/* Group 1: History */}
+                <div className="flex items-center gap-0.5">
                   <button 
-                    onClick={() => {
-                      setIsPenDropdownOpen(!isPenDropdownOpen);
-                      setIsHighlighterDropdownOpen(false);
-                      setIsHeaderDropdownOpen(false);
-                    }}
+                    onClick={handleUndo} 
                     type="button"
-                    title={t('editor.tooltipColor')} 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                    title={t('editor.tooltipUndo')} 
+                    className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"
                   >
-                    <Palette className="w-4 h-4 opacity-70 text-accent" />
+                    <Undo className="w-3.5 h-3.5 opacity-80" />
                   </button>
-                  {isPenDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
-                      {[
-                        { name: lang === 'ar' ? 'أحمر' : 'Red', hex: '#ef4444', class: 'bg-red-500' },
-                        { name: lang === 'ar' ? 'أخضر' : 'Green', hex: '#22c55e', class: 'bg-emerald-500' },
-                        { name: lang === 'ar' ? 'أزرق' : 'Blue', hex: '#3b82f6', class: 'bg-blue-500' },
-                        { name: lang === 'ar' ? 'بنفسجي' : 'Purple', hex: '#a855f7', class: 'bg-purple-500' },
-                        { name: lang === 'ar' ? 'برتقالي' : 'Orange', hex: '#f97316', class: 'bg-orange-500' }
-                      ].map((color, idx) => (
-                        <button 
-                          key={idx}
-                          type="button"
-                          onClick={() => insertColorText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          <span className={cn("w-3 h-3 rounded-full shrink-0", color.class)} />
-                          <span>{color.name}</span>
-                        </button>
-                      ))}
-                      <button 
-                        type="button"
-                        onClick={() => insertColorText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
-                      >
-                        <span className="w-3 h-3 rounded-full shrink-0 bg-transparent border border-border" />
-                        <span>{t('editor.clearFormat')}</span>
-                      </button>
-                    </div>
-                  )}
+                  <button 
+                    onClick={handleRedo} 
+                    type="button"
+                    title={t('editor.tooltipRedo')} 
+                    className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"
+                  >
+                    <Redo className="w-3.5 h-3.5 opacity-80" />
+                  </button>
                 </div>
 
-                {/* Highlighter Picker */}
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setIsHighlighterDropdownOpen(!isHighlighterDropdownOpen);
-                      setIsPenDropdownOpen(false);
-                      setIsHeaderDropdownOpen(false);
-                    }}
-                    type="button"
-                    title={t('editor.tooltipHighlight')} 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
+
+                {/* Group 2: Font & Size */}
+                <div className="flex items-center gap-1.5">
+                  <select 
+                    value={fontFamily}
+                    onChange={e => setFontFamily(e.target.value)}
+                    className="h-7 px-1.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
                   >
-                    <Highlighter className="w-4 h-4 opacity-70 text-warning" />
-                  </button>
-                  {isHighlighterDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
-                      {[
-                        { name: lang === 'ar' ? 'أصفر' : 'Yellow', hex: '#fef08a', class: 'bg-yellow-200 text-slate-800' },
-                        { name: lang === 'ar' ? 'ليموني' : 'Greenish', hex: '#bbf7d0', class: 'bg-emerald-200 text-slate-800' },
-                        { name: lang === 'ar' ? 'سماوي' : 'Cyan', hex: '#cffafe', class: 'bg-cyan-200 text-slate-800' },
-                        { name: lang === 'ar' ? 'وردي' : 'Pink', hex: '#fbcfe8', class: 'bg-pink-200 text-slate-800' }
-                      ].map((color, idx) => (
-                        <button 
-                          key={idx}
-                          type="button"
-                          onClick={() => insertHighlightText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          <span className={cn("w-3 h-3 rounded shrink-0", color.class)} />
-                          <span>{color.name}</span>
-                        </button>
-                      ))}
-                      <button 
-                        type="button"
-                        onClick={() => insertHighlightText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
-                      >
-                        <span className="w-3 h-3 rounded shrink-0 bg-transparent border border-border" />
-                        <span>{t('editor.clearHighlight')}</span>
-                      </button>
-                    </div>
-                  )}
+                    <option value="font-sans">{t('editor.fontSans')}</option>
+                    <option value="font-mono">{t('editor.fontMono')}</option>
+                    <option value="font-serif">{t('editor.fontSerif')}</option>
+                  </select>
+
+                  <select 
+                    value={fontSize}
+                    onChange={e => setFontSize(e.target.value)}
+                    className="h-7 px-1.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    <option value="text-xs">12px</option>
+                    <option value="text-sm">14px</option>
+                    <option value="text-base">16px</option>
+                    <option value="text-lg">18px</option>
+                    <option value="text-xl">20px</option>
+                  </select>
+
+                  {/* Headers Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setIsHeaderDropdownOpen(!isHeaderDropdownOpen);
+                        setIsPenDropdownOpen(false);
+                        setIsHighlighterDropdownOpen(false);
+                      }}
+                      type="button"
+                      className="h-7 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer text-slate-700 dark:text-slate-200"
+                    >
+                      <Heading className="w-3 h-3 text-accent" />
+                      <span>{t('editor.headings')}</span>
+                    </button>
+                    {isHeaderDropdownOpen && (
+                      <div className="absolute right-0 top-8 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
+                        {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
+                          <button 
+                            key={idx}
+                            type="button"
+                            onClick={() => insertHeader(tag)}
+                            className="px-2.5 py-1.5 rounded-lg text-[9px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
+                          >
+                            {t('editor.heading')} H{idx + 1}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+                <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-                {/* Headers Dropdown */}
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setIsHeaderDropdownOpen(!isHeaderDropdownOpen);
-                      setIsPenDropdownOpen(false);
-                      setIsHighlighterDropdownOpen(false);
-                    }}
-                    type="button"
-                    className="h-8 px-2.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer text-slate-700 dark:text-slate-200"
-                  >
-                    <Heading className="w-3.5 h-3.5 text-accent" />
-                    <span>{t('editor.headings')}</span>
-                  </button>
-                  {isHeaderDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
-                      {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
+                {/* Group 3: Text Formatting */}
+                <div className="flex items-center gap-0.5">
+                  <button type="button" onClick={() => execFormat('bold')} title={lang === 'ar' ? 'عريض' : 'Bold'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('italic')} title={lang === 'ar' ? 'مائل' : 'Italic'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('underline')} title={lang === 'ar' ? 'تسطير' : 'Underline'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Underline className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('strikeThrough')} title={lang === 'ar' ? 'يتوسطه خط' : 'Strikethrough'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Strikethrough className="w-3.5 h-3.5 opacity-80" /></button>
+                  
+                  {/* Pen Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setIsPenDropdownOpen(!isPenDropdownOpen);
+                        setIsHighlighterDropdownOpen(false);
+                        setIsHeaderDropdownOpen(false);
+                      }}
+                      type="button"
+                      title={t('editor.tooltipColor')} 
+                      className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                    >
+                      <Palette className="w-3.5 h-3.5 opacity-80 text-accent" />
+                    </button>
+                    {isPenDropdownOpen && (
+                      <div className="absolute right-0 top-8 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
+                        {[
+                          { name: lang === 'ar' ? 'أحمر' : 'Red', hex: '#ef4444', class: 'bg-red-500' },
+                          { name: lang === 'ar' ? 'أخضر' : 'Green', hex: '#22c55e', class: 'bg-emerald-500' },
+                          { name: lang === 'ar' ? 'أزرق' : 'Blue', hex: '#3b82f6', class: 'bg-blue-500' },
+                          { name: lang === 'ar' ? 'بنفسجي' : 'Purple', hex: '#a855f7', class: 'bg-purple-500' },
+                          { name: lang === 'ar' ? 'برتقالي' : 'Orange', hex: '#f97316', class: 'bg-orange-500' }
+                        ].map((color, idx) => (
+                          <button 
+                            key={idx}
+                            type="button"
+                            onClick={() => insertColorText(color.hex)}
+                            className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                          >
+                            <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", color.class)} />
+                            <span>{color.name}</span>
+                          </button>
+                        ))}
                         <button 
-                          key={idx}
                           type="button"
-                          onClick={() => insertHeader(tag)}
-                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
+                          onClick={() => insertColorText('')}
+                          className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
                         >
-                          {t('editor.heading')} H{idx + 1}
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-transparent border border-border" />
+                          <span>{t('editor.clearFormat')}</span>
                         </button>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Highlighter Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setIsHighlighterDropdownOpen(!isHighlighterDropdownOpen);
+                        setIsPenDropdownOpen(false);
+                        setIsHeaderDropdownOpen(false);
+                      }}
+                      type="button"
+                      title={t('editor.tooltipHighlight')} 
+                      className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                    >
+                      <Highlighter className="w-3.5 h-3.5 opacity-80 text-warning" />
+                    </button>
+                    {isHighlighterDropdownOpen && (
+                      <div className="absolute right-0 top-8 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
+                        {[
+                          { name: lang === 'ar' ? 'أصفر' : 'Yellow', hex: '#fef08a', class: 'bg-yellow-200 text-slate-800' },
+                          { name: lang === 'ar' ? 'ليموني' : 'Greenish', hex: '#bbf7d0', class: 'bg-emerald-200 text-slate-800' },
+                          { name: lang === 'ar' ? 'سماوي' : 'Cyan', hex: '#cffafe', class: 'bg-cyan-200 text-slate-800' },
+                          { name: lang === 'ar' ? 'وردي' : 'Pink', hex: '#fbcfe8', class: 'bg-pink-200 text-slate-800' }
+                        ].map((color, idx) => (
+                          <button 
+                            key={idx}
+                            type="button"
+                            onClick={() => insertHighlightText(color.hex)}
+                            className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                          >
+                            <span className={cn("w-2.5 h-2.5 rounded shrink-0", color.class)} />
+                            <span>{color.name}</span>
+                          </button>
+                        ))}
+                        <button 
+                          type="button"
+                          onClick={() => insertHighlightText('')}
+                          className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                        >
+                          <span className="w-2.5 h-2.5 rounded shrink-0 bg-transparent border border-border" />
+                          <span>{t('editor.clearHighlight')}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+                <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-                {/* Alignment */}
+                {/* Group 4: Alignment */}
                 <div className="flex bg-surface2-light dark:bg-surface2-dark p-0.5 rounded-lg border border-border/30">
                   <button 
                     onClick={() => handleAlignmentChange('right')}
@@ -704,34 +666,173 @@ ${textToImprove}`;
                   </button>
                 </div>
 
-                <div className="w-[1px] h-5 bg-border mx-1 my-auto" />
+                <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-                {/* Formatting Helpers */}
-                <button type="button" onClick={() => execFormat('bold')} title={lang === 'ar' ? 'عريض' : 'Bold'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('italic')} title={lang === 'ar' ? 'مائل' : 'Italic'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('underline')} title={lang === 'ar' ? 'تسطير' : 'Underline'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Underline className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('strikeThrough')} title={lang === 'ar' ? 'يتوسطه خط' : 'Strikethrough'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Strikethrough className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('insertUnorderedList')} title={lang === 'ar' ? 'قائمة نقطية' : 'Bullet List'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('insertOrderedList')} title={lang === 'ar' ? 'قائمة رقمية' : 'Numbered List'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><ListOrdered className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('formatBlock', '<blockquote>')} title={lang === 'ar' ? 'اقتباس' : 'Blockquote'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Quote className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={() => execFormat('formatBlock', '<pre>')} title={lang === 'ar' ? 'كود' : 'Code Block'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
-                <button type="button" onClick={insertLink} title={lang === 'ar' ? 'رابط' : 'Link'} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
+                {/* Group 5: Blocks */}
+                <div className="flex items-center gap-0.5">
+                  <button type="button" onClick={() => execFormat('insertUnorderedList')} title={lang === 'ar' ? 'قائمة نقطية' : 'Bullet List'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('insertOrderedList')} title={lang === 'ar' ? 'قائمة رقمية' : 'Numbered List'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><ListOrdered className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('formatBlock', '<blockquote>')} title={lang === 'ar' ? 'اقتباس' : 'Blockquote'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Quote className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button type="button" onClick={() => execFormat('formatBlock', '<pre>')} title={lang === 'ar' ? 'كود' : 'Code Block'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-80" /></button>
+                </div>
+
+                <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
+
+                {/* Group 6: Media & Links */}
+                <div className="flex items-center gap-0.5">
+                  <button type="button" onClick={insertLink} title={lang === 'ar' ? 'رابط' : 'Link'} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-80" /></button>
+                  <button 
+                    onClick={handleImageToolbarClick} 
+                    type="button"
+                    title={t('editor.tooltipUploadImage')} 
+                    className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"
+                  >
+                    <Image className="w-3.5 h-3.5 opacity-80" />
+                  </button>
+                </div>
+
+                {/* Group 7: AI Enhancer Panel Toggle */}
+                {hasAnyAi && (
+                  <>
+                    <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
+                    <button
+                      type="button"
+                      onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+                      className={cn(
+                        "h-7 px-2.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all cursor-pointer border",
+                        isAiPanelOpen 
+                          ? "bg-accent/15 text-accent border-accent/30 shadow-sm"
+                          : "bg-surface2-light dark:bg-surface2-dark border-border/30 hover:bg-border/20 text-slate-700 dark:text-slate-200"
+                      )}
+                      title={t('editor.aiEnhance')}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>{t('editor.aiEnhance')}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Collapsible AI Enhancer Panel */}
+            {isAiPanelOpen && viewMode === 'edit' && (
+              <div className="p-4 bg-slate-50 dark:bg-surface2-dark/30 border-b border-border/30 space-y-3 transition-all duration-300">
+                <div className="flex items-center justify-between select-none">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-accent" />
+                    <span className="text-xs font-black">{lang === 'ar' ? 'مساعد الذكاء الاصطناعي لتحسين البرومبت' : 'AI Prompt Enhancer'}</span>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setIsAiPanelOpen(false)}
+                    className="p-1 rounded-lg hover:bg-border/20 text-muted-light dark:text-muted-dark cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 select-none">
+                  {/* Gemini Provider */}
+                  <div className={cn(
+                    "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                    isGeminiActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Google Gemini</span>
+                      <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isGeminiActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                        {isGeminiActive ? t('editor.geminiReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={isGeminiActive ? 'primary' : 'secondary'}
+                      disabled={!isGeminiActive || aiEnhancing}
+                      onClick={() => handleAiEnhance('gemini')}
+                      className="w-full text-[10px] h-8 font-black"
+                    >
+                      {aiEnhancingProvider === 'gemini' ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                        </>
+                      ) : (
+                        lang === 'ar' ? 'تحسين باستخدام Gemini' : 'Enhance with Gemini'
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* OpenAI Provider */}
+                  <div className={cn(
+                    "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                    isOpenAIActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">OpenAI GPT</span>
+                      <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isOpenAIActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                        {isOpenAIActive ? t('editor.openaiReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={isOpenAIActive ? 'primary' : 'secondary'}
+                      disabled={!isOpenAIActive || aiEnhancing}
+                      onClick={() => handleAiEnhance('openai')}
+                      className="w-full text-[10px] h-8 font-black"
+                    >
+                      {aiEnhancingProvider === 'openai' ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                        </>
+                      ) : (
+                        lang === 'ar' ? 'تحسين باستخدام OpenAI' : 'Enhance with OpenAI'
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Claude Provider */}
+                  <div className={cn(
+                    "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                    isClaudeActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                  )}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Anthropic Claude</span>
+                      <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isClaudeActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                        {isClaudeActive ? t('editor.claudeReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={isClaudeActive ? 'primary' : 'secondary'}
+                      disabled={!isClaudeActive || aiEnhancing}
+                      onClick={() => handleAiEnhance('claude')}
+                      className="w-full text-[10px] h-8 font-black"
+                    >
+                      {aiEnhancingProvider === 'claude' ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                        </>
+                      ) : (
+                        lang === 'ar' ? 'تحسين باستخدام Claude' : 'Enhance with Claude'
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
             <CardContent className="p-0">
                {viewMode === 'edit' ? (
-                 <div className="relative p-4">
-
-
-                   <input
-                     id="editor-image-uploader"
-                     type="file"
-                     accept="image/*"
-                     className="hidden"
-                     onChange={handleImageUpload}
-                   />
-                   <div
+                  <div className="relative p-4">
+                    <input
+                      id="editor-image-uploader"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                    <div
                       ref={editorRef}
                       contentEditable
                       onInput={handleEditorInput}
@@ -748,7 +849,7 @@ ${textToImprove}`;
                       )}
                       style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
                     />
-                    <div className="absolute bottom-3 start-6 text-[9px] font-bold opacity-45">
+                    <div className="absolute bottom-3 start-6 text-[9px] font-bold opacity-45 select-none">
                       {t('editor.charCountText').replace('{count}', String(charCount))}
                     </div>
 
@@ -766,90 +867,101 @@ ${textToImprove}`;
                          </div>
                        </div>
                      )}
-                 </div>
+                  </div>
                ) : (
-                 <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto" style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
-                    <Markdown rehypePlugins={[rehypeRaw]}>{formData.content || t('editor.noContentPreview')}</Markdown>
-                 </div>
+                  <div className="min-h-[350px] p-8 prose prose-sm dark:prose-invert max-w-none bg-surface2-light/30 dark:bg-surface2-dark/30 overflow-y-auto" style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}>
+                     <Markdown rehypePlugins={[rehypeRaw]}>{formData.content || t('editor.noContentPreview')}</Markdown>
+                  </div>
                )}
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title={t('editor.notes')} subtitle={t('editor.notesSubtitle')} />
-            <CardContent>
-              <Textarea
-                placeholder={t('editor.notesPlaceholder')}
-                className="min-h-[80px] text-xs"
-                value={formData.notes}
-                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              />
-            </CardContent>
-          </Card>
+          {/* Notes Card */}
+          {!isFocusMode && (
+            <Card className="bg-white dark:bg-surface-dark border-border/40 shadow-xs">
+              <CardHeader title={t('editor.notes')} subtitle={t('editor.notesSubtitle')} />
+              <CardContent>
+                <Textarea
+                  placeholder={t('editor.notesPlaceholder')}
+                  className="min-h-[80px] text-xs"
+                  value={formData.notes}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Sidebar (Right) */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          
-          {/* Variables panel matching Image 4 */}
-          <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title={t('editor.variables')} icon={Variable} subtitle={t('editor.variablesSubtitle')} />
-            <CardContent className="space-y-2">
-              {uniqueVariables.map((v, i) => (
-                <div key={i} className="flex items-center justify-between p-2.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/20">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="w-3.5 h-3.5 opacity-30 cursor-grab" />
-                    <span className="text-xs font-mono font-bold">{"{"}{v}{"}"}</span>
+        {/* Sidebar (Right Column) */}
+        {!isFocusMode && (
+          <div className="col-span-12 lg:col-span-4 space-y-4">
+            
+            {/* Variables panel */}
+            <Card className="bg-white dark:bg-surface-dark border-border/40 shadow-xs">
+              <CardHeader title={t('editor.variables')} icon={Variable} subtitle={t('editor.variablesSubtitle')} />
+              <CardContent className="space-y-2">
+                {uniqueVariables.map((v, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/20">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <GripVertical className="w-3.5 h-3.5 opacity-30 cursor-grab shrink-0" />
+                      <span className="text-xs font-mono font-bold truncate">{"{"}{v}{"}"}</span>
+                    </div>
+                    <Badge variant="accent" className="text-[9px] font-black py-0.5 px-2 shrink-0">{t('editor.badgeText')}</Badge>
                   </div>
-                  <Badge variant="accent" className="text-[9px] font-black py-0.5 px-2">{t('editor.badgeText')}</Badge>
+                ))}
+                {uniqueVariables.length === 0 && (
+                  <EmptyState
+                    icon={Variable}
+                    title={t('editor.variablesEmptyTitle')}
+                    description={t('editor.variablesEmptyDesc')}
+                    compactMode={true}
+                    className="border border-dashed border-border/40 rounded-2xl bg-surface2-light/30 dark:bg-surface2-dark/30"
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Prompt Info metadata panel */}
+            <Card className="bg-white dark:bg-surface-dark border-border/40 shadow-xs">
+              <CardHeader title={t('editor.promptInfo')} icon={Info} />
+              <CardContent className="space-y-3 text-xs font-bold">
+                <div className="flex justify-between">
+                  <span className="opacity-50">{t('editor.createdAt')}</span>
+                  <span>{existingPrompt ? new Date(existingPrompt.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
                 </div>
-              ))}
-              {uniqueVariables.length === 0 && (
-                <p className="text-xs text-muted-light font-medium opacity-50 italic py-2">{t('editor.noVariables')}</p>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex justify-between">
+                  <span className="opacity-50">{t('editor.lastModified')}</span>
+                  <span>{existingPrompt ? new Date(existingPrompt.updatedAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US') : (lang === 'ar' ? 'الآن' : 'Now')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-50">{t('editor.creator')}</span>
+                  <span>{formData.author}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="opacity-50">{t('editor.status')}</span>
+                  <span className="text-success">{lang === 'ar' ? 'نشط' : 'Active'}</span>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Prompt Info */}
-          <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title={t('editor.promptInfo')} icon={Info} />
-            <CardContent className="space-y-3 text-xs font-bold">
-              <div className="flex justify-between">
-                <span className="opacity-50">{t('editor.createdAt')}</span>
-                <span>{existingPrompt ? new Date(existingPrompt.createdAt).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US') : new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="opacity-50">{t('editor.lastModified')}</span>
-                <span>{existingPrompt ? new Date(existingPrompt.updatedAt).toLocaleTimeString(lang === 'ar' ? 'ar-EG' : 'en-US') : (lang === 'ar' ? 'الآن' : 'Now')}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="opacity-50">{t('editor.creator')}</span>
-                <span>{formData.author}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="opacity-50">{t('editor.status')}</span>
-                <span className="text-success">{lang === 'ar' ? 'نشط' : 'Active'}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Usage Estimation matching Image 4 */}
-          <Card className="bg-white dark:bg-surface-dark border-border/40">
-            <CardHeader title={t('editor.usageEstimate')} icon={Activity} />
-            <CardContent className="grid grid-cols-2 gap-4 text-center">
-              <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
-                <div className="text-sm font-bold mb-1">{t('editor.tokens')}</div>
-                <div className="text-xl font-black text-slate-800 dark:text-slate-100">~ {tokenCount}</div>
-                <div className="text-[9px] opacity-40 font-bold">{t('editor.approximate')}</div>
-              </div>
-              <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
-                <div className="text-sm font-bold mb-1">{t('editor.charCountTitle')}</div>
-                <div className="text-xl font-black text-slate-800 dark:text-slate-100">{charCount}</div>
-                <div className="text-[9px] opacity-40 font-bold">{t('editor.includingSpaces')}</div>
-              </div>
-             </CardContent>
-          </Card>
-        </div>
+            {/* Usage Estimation panel */}
+            <Card className="bg-white dark:bg-surface-dark border-border/40 shadow-xs">
+              <CardHeader title={t('editor.usageEstimate')} icon={Activity} />
+              <CardContent className="grid grid-cols-2 gap-4 text-center">
+                <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
+                  <div className="text-xs font-bold mb-1 opacity-70">{t('editor.tokens')}</div>
+                  <div className="text-lg font-black text-slate-800 dark:text-slate-100">~ {tokenCount}</div>
+                  <div className="text-[9px] opacity-40 font-bold">{t('editor.approximate')}</div>
+                </div>
+                <div className="p-3 bg-surface2-light dark:bg-surface2-dark rounded-2xl border border-border/20">
+                  <div className="text-xs font-bold mb-1 opacity-70">{t('editor.charCountTitle')}</div>
+                  <div className="text-lg font-black text-slate-800 dark:text-slate-100">{charCount}</div>
+                  <div className="text-[9px] opacity-40 font-bold">{t('editor.includingSpaces')}</div>
+                </div>
+               </CardContent>
+            </Card>
+          </div>
+        )}
 
       </div>
     </div>

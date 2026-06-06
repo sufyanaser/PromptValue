@@ -44,6 +44,10 @@ export interface TranslationCatalog {
     storage: string;
     storageLocal: string;
     manageBackups: string;
+    groupLibrary: string;
+    groupOrganization: string;
+    groupSystem: string;
+    toggleCollapse: string;
   };
   header: {
     proMode: string;
@@ -251,6 +255,10 @@ export interface TranslationCatalog {
   settings: {
     title: string;
     subtitle: string;
+    tabPreferences: string;
+    tabAIProviders: string;
+    tabDataSafety: string;
+    tabApplication: string;
     tabGeneral: string;
     tabAI: string;
     tabCloud: string;
@@ -421,6 +429,11 @@ export interface TranslationCatalog {
     writePromptFirst: string;
     enhanceFailed: string;
     secondsAgo: string;
+    focusMode: string;
+    exitFocusMode: string;
+    aiEnhance: string;
+    variablesEmptyTitle: string;
+    variablesEmptyDesc: string;
   };
   details: {
     promptNotFound: string;
@@ -458,6 +471,31 @@ export interface TranslationCatalog {
     createdAt: string;
     lastUpdatedAt: string;
     error: string;
+  };
+  emptyStates: {
+    noPromptsTitle: string;
+    noPromptsDesc: string;
+    createFirstPromptBtn: string;
+    
+    noSearchResultsTitle: string;
+    noSearchResultsDesc: string;
+    resetFiltersBtn: string;
+
+    noFavoritesTitle: string;
+    noFavoritesDesc: string;
+    browsePromptsBtn: string;
+
+    noCategoriesTitle: string;
+    noCategoriesDesc: string;
+    createFirstCategoryBtn: string;
+
+    noTagsTitle: string;
+    noTagsDesc: string;
+    createFirstTagBtn: string;
+
+    noBackupsTitle: string;
+    noBackupsDesc: string;
+    createFirstBackupBtn: string;
   };
 }
 
@@ -508,6 +546,10 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       storage: "تخزين:",
       storageLocal: "محلي (Local)",
       manageBackups: "إدارة النسخ الاحتياطي",
+      groupLibrary: "المكتبة",
+      groupOrganization: "التنظيم",
+      groupSystem: "النظام",
+      toggleCollapse: "طي القائمة",
     },
     header: {
       proMode: "الوضع الاحترافي",
@@ -715,6 +757,10 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
     settings: {
       title: "الإعدادات",
       subtitle: "خصص تجربة استخدام PromptVault بما يناسب احتياجاتك وتفضيلاتك.",
+      tabPreferences: "تفضيلات المستخدم",
+      tabAIProviders: "مزودو الذكاء الاصطناعي",
+      tabDataSafety: "البيانات والأمان",
+      tabApplication: "التطبيق",
       tabGeneral: "عام",
       tabAI: "الذكاء الاصطناعي",
       tabCloud: "المزامنة السحابية",
@@ -885,6 +931,11 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       writePromptFirst: "يرجى كتابة نص البرومبت أولاً ليتمكن المساعد من تحسينه.",
       enhanceFailed: "فشل التحسين: ",
       secondsAgo: "منذ ثوان",
+      focusMode: "وضع التركيز",
+      exitFocusMode: "إلغاء وضع التركيز",
+      aiEnhance: "التحسين الذكي",
+      variablesEmptyTitle: "لا توجد متغيرات مكتشفة",
+      variablesEmptyDesc: "اكتب نصاً محاطاً بأقواس مجعده {مثل_هذا} لتعريفه كمتغير وتتبع قيمته تلقائياً.",
     },
     details: {
       promptNotFound: "البرومبت غير موجود",
@@ -922,6 +973,31 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       createdAt: "تاريخ الإنشاء",
       lastUpdatedAt: "آخر تحديث",
       error: "خطأ: ",
+    },
+    emptyStates: {
+      noPromptsTitle: "لا توجد برومبتات مضافة",
+      noPromptsDesc: "ابدأ بإنشاء أول برومبت لك لتنظيمه في مكتبتك وتسهيل استخدامه لاحقاً.",
+      createFirstPromptBtn: "إنشاء برومبت جديد",
+      
+      noSearchResultsTitle: "لا توجد نتائج مطابقة لبحثك",
+      noSearchResultsDesc: "لم نتمكن من العثور على أي برومبتات مطابقة لكلمة البحث أو خيارات التصفية الحالية.",
+      resetFiltersBtn: "إعادة تعيين خيارات التصفية",
+
+      noFavoritesTitle: "لا توجد برومبتات مفضلة",
+      noFavoritesDesc: "قم بتمييز البرومبتات الأكثر استخداماً بالنجمة لتظهر لك هنا للوصول السريع.",
+      browsePromptsBtn: "تصفح المكتبة",
+
+      noCategoriesTitle: "لا توجد تصنيفات مضافة",
+      noCategoriesDesc: "أنشئ تصنيفات لتجميع وتنظيم البرومبتات المتشابهة لتصفح أسهل.",
+      createFirstCategoryBtn: "إنشاء تصنيف جديد",
+
+      noTagsTitle: "لا توجد وسوم مضافة",
+      noTagsDesc: "أضف وسوم لتحديد البرومبتات وجعلها قابلة للبحث بكلمات مفتاحية دقيقة.",
+      createFirstTagBtn: "إنشاء وسم جديد",
+
+      noBackupsTitle: "لا توجد نسخ احتياطية",
+      noBackupsDesc: "قم بإنشاء نسخة احتياطية يدوية أو فعّل النسخ التلقائي لحماية بياناتك من الضياع.",
+      createFirstBackupBtn: "إنشاء نسخة احتياطية الآن",
     },
   },
   en: {
@@ -970,6 +1046,10 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       storage: "Storage:",
       storageLocal: "Local",
       manageBackups: "Manage Backups",
+      groupLibrary: "Library",
+      groupOrganization: "Organization",
+      groupSystem: "System",
+      toggleCollapse: "Collapse Menu",
     },
     header: {
       proMode: "Professional Mode",
@@ -1177,6 +1257,10 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
     settings: {
       title: "Settings",
       subtitle: "Customize your PromptVault experience to suit your needs and preferences.",
+      tabPreferences: "Preferences",
+      tabAIProviders: "AI Providers",
+      tabDataSafety: "Data & Safety",
+      tabApplication: "Application",
       tabGeneral: "General",
       tabAI: "AI",
       tabCloud: "Cloud Sync",
@@ -1347,6 +1431,11 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       writePromptFirst: "Please write the prompt text first for the assistant to enhance.",
       enhanceFailed: "Enhancement failed: ",
       secondsAgo: "seconds ago",
+      focusMode: "Focus Mode",
+      exitFocusMode: "Exit Focus Mode",
+      aiEnhance: "AI Enhance",
+      variablesEmptyTitle: "No variables detected",
+      variablesEmptyDesc: "Type text enclosed in curly braces {like_this} to define it as a variable and track it automatically.",
     },
     details: {
       promptNotFound: "Prompt not found",
@@ -1384,6 +1473,31 @@ export const translations: Record<'ar' | 'en', TranslationCatalog> = {
       createdAt: "Date Created",
       lastUpdatedAt: "Last Updated",
       error: "Error: ",
+    },
+    emptyStates: {
+      noPromptsTitle: "No prompts found",
+      noPromptsDesc: "Start by creating your first prompt to organize it in your library.",
+      createFirstPromptBtn: "Create First Prompt",
+      
+      noSearchResultsTitle: "No search results matching your query",
+      noSearchResultsDesc: "We couldn't find any prompts matching your current search term or filter criteria.",
+      resetFiltersBtn: "Reset Filters",
+
+      noFavoritesTitle: "No favorites added yet",
+      noFavoritesDesc: "Star your most-used prompts to find them here quickly.",
+      browsePromptsBtn: "Browse Prompts",
+
+      noCategoriesTitle: "No categories found",
+      noCategoriesDesc: "Create categories to group and organize similar prompts in your library.",
+      createFirstCategoryBtn: "Create First Category",
+
+      noTagsTitle: "No tags found",
+      noTagsDesc: "Add tags to mark prompts and make them searchable by key terms.",
+      createFirstTagBtn: "Create First Tag",
+
+      noBackupsTitle: "No backups created",
+      noBackupsDesc: "Generate manual backups or enable automatic daily backups to safeguard your local data.",
+      createFirstBackupBtn: "Create Backup Now",
     },
   },
 };

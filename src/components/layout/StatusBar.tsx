@@ -8,26 +8,29 @@ export function StatusBar() {
 
   return (
     <footer className={cn(
-      "h-[36px] flex items-center justify-between px-6 border-t text-[11px] font-bold transition-colors duration-200 select-none",
-      theme === 'dark' ? "bg-shell-dark border-border-dark text-muted-dark" : "bg-shell-light border-border-light text-muted-light"
+      "h-8 flex items-center justify-between px-6 border-t text-[10px] font-medium tracking-wide transition-colors duration-200 select-none shrink-0 z-50",
+      theme === 'dark' ? "bg-shell-dark border-border-dark text-muted-dark/80" : "bg-shell-light border-border-light text-muted-light/80"
     )}>
-      <div className="flex items-center gap-4">
-        <span>PromptVault v1.2.1</span>
+      {/* Start Zone */}
+      <div className="flex items-center gap-4 shrink-0">
+        <span className="font-bold">PromptVault v1.2.1</span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-        <span>{t('statusBar.allSystemsGo')}</span>
+      {/* Center Zone */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse shrink-0" />
+        <span className="truncate max-w-[150px] sm:max-w-none">{t('statusBar.allSystemsGo')}</span>
       </div>
 
-      <div className="flex items-center gap-5">
-        <div className="flex items-center gap-1.5">
-          <RefreshCw className="w-3 h-3 opacity-60" />
+      {/* End Zone */}
+      <div className="flex items-center gap-5 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5">
+          <RefreshCw className="w-3 h-3 opacity-60 animate-[spin_8s_linear_infinite]" />
           <span>{t('statusBar.syncLabel')}</span>
         </div>
         <div className="flex items-center gap-2">
           <span>{t('statusBar.spaceUsed')}</span>
-          <div className="w-16 h-1.5 bg-border/40 rounded-full overflow-hidden hidden sm:block">
+          <div className="w-16 h-1 bg-border/40 rounded-full overflow-hidden hidden md:block">
             <div className="w-[5%] h-full bg-accent rounded-full" />
           </div>
         </div>

@@ -7,6 +7,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Search, Filter, RefreshCw, Star, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export function AdvancedSearchPage() {
   const { data, t, lang } = useApp();
@@ -94,40 +95,47 @@ export function AdvancedSearchPage() {
       <div className="space-y-4">
         <h3 className="text-lg font-black opacity-40 ps-2">{t('search.resultsTitle')} ({results.length})</h3>
         <Card>
-           <div className="overflow-x-auto">
-              <table className="w-full text-start border-collapse">
-                 <thead>
-                   <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black border-b border-border/40 uppercase">
-                     <th className="px-6 py-4 text-start">{t('search.promptCol')}</th>
-                     <th className="px-6 py-4 text-start">{t('search.categoryCol')}</th>
-                     <th className="px-6 py-4 text-center">{t('search.actionsCol')}</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-border/20">
-                   {results.map(p => (
-                     <tr key={p.id} className="hover:bg-surface2-light/30">
-                        <td className="px-6 py-4 text-start">
-                          <div className="flex items-center gap-3">
-                            {p.isFavorite && <Star className="w-3 h-3 text-accent fill-accent" />}
-                            <span className="text-sm font-bold">{p.title}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-start text-xs font-bold opacity-60">
-                          {data.categories.find(c => c.id === p.categoryId)?.name || t('prompts.unclassified')}
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                           <Link to={`/prompts/${p.id}`}>
-                             <button className="text-accent underline text-xs font-black">{t('search.openDetails')}</button>
-                           </Link>
-                        </td>
+           {results.length === 0 ? (
+             <EmptyState
+               icon={Search}
+               title={t('emptyStates.noSearchResultsTitle')}
+               description={t('emptyStates.noSearchResultsDesc')}
+               actionLabel={t('search.resetBtn')}
+               onAction={() => setFilters({ query: '', categoryId: 'all', status: 'all', onlyFavorites: false })}
+             />
+           ) : (
+             <div className="overflow-x-auto">
+                <table className="w-full text-start border-collapse">
+                   <thead>
+                     <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black border-b border-border/40 uppercase">
+                       <th className="px-6 py-4 text-start">{t('search.promptCol')}</th>
+                       <th className="px-6 py-4 text-start">{t('search.categoryCol')}</th>
+                       <th className="px-6 py-4 text-center">{t('search.actionsCol')}</th>
                      </tr>
-                   ))}
-                 </tbody>
-              </table>
-              {results.length === 0 && (
-                <div className="py-20 text-center text-muted-light">{t('search.noResults')}</div>
-              )}
-           </div>
+                   </thead>
+                   <tbody className="divide-y divide-border/20">
+                     {results.map(p => (
+                       <tr key={p.id} className="hover:bg-surface2-light/30">
+                          <td className="px-6 py-4 text-start">
+                            <div className="flex items-center gap-3">
+                              {p.isFavorite && <Star className="w-3 h-3 text-accent fill-accent" />}
+                              <span className="text-sm font-bold">{p.title}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-start text-xs font-bold opacity-60">
+                            {data.categories.find(c => c.id === p.categoryId)?.name || t('prompts.unclassified')}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                             <Link to={`/prompts/${p.id}`}>
+                               <button className="text-accent underline text-xs font-black">{t('search.openDetails')}</button>
+                             </Link>
+                          </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                </table>
+             </div>
+           )}
         </Card>
       </div>
     </div>

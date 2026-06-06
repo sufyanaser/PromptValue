@@ -12,6 +12,7 @@ import {
 import { cn } from '../../lib/cn';
 import Markdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import { EmptyState } from '../ui/EmptyState';
 
 interface FolderType {
   id: string;
@@ -77,6 +78,7 @@ export function NotepadView() {
   );
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [activeFolderId, setActiveFolderId] = useState<string>('gemini');
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Sidebar Collapsed State
@@ -604,7 +606,7 @@ ${textToImprove}`;
 
                 {/* Folder Prompts List */}
                 {isExpanded && (
-                  <div className="ms-4 ps-2 border-s border-border/30 space-y-0.5">
+                  <div className="ms-4 ps-2 border-s border-border/30 space-y-0.5 animate-none">
                     {promptsInFolder.map(p => {
                       const isSelected = p.id === selectedPromptId;
                       const isRenaming = renamingPromptId === p.id;
@@ -652,7 +654,7 @@ ${textToImprove}`;
                                 e.stopPropagation();
                                 handleDeletePrompt(p.id);
                               }}
-                              className="opacity-0 group-hover/item:opacity-100 p-1 rounded hover:bg-danger/10 text-danger transition-opacity shrink-0 cursor-pointer ms-1"
+                              className="opacity-0 group-hover/item:opacity-100 p-1 rounded hover:bg-danger/10 text-danger transition-opacity shrink-0 cursor-pointer ms-1 animate-none"
                               title={t('notepad.deleteTooltip')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -662,7 +664,9 @@ ${textToImprove}`;
                       );
                     })}
                     {promptsInFolder.length === 0 && (
-                      <p className="text-[10px] opacity-40 italic py-1.5 pe-2">{lang === 'ar' ? 'مجلد فارغ...' : 'Empty folder...'}</p>
+                      <div className="py-2.5 px-3 border border-dashed border-border/30 rounded-lg text-center opacity-50 text-[9px] italic font-medium my-1">
+                        {lang === 'ar' ? 'مجلد فارغ...' : 'Empty folder...'}
+                      </div>
                     )}
                   </div>
                 )}
@@ -678,7 +682,7 @@ ${textToImprove}`;
               setAppViewMode('detailed');
               navigate('/settings');
             }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-surface2-dark hover:bg-slate-100 dark:hover:bg-surface2-dark/80 border border-border/30 rounded-xl text-xs font-bold hover:text-accent hover:border-accent/30 shadow-xs hover:shadow-sm transition-all duration-300 cursor-pointer text-slate-600 dark:text-slate-300"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-50 dark:bg-surface2-dark hover:bg-slate-100 dark:hover:bg-surface2-dark/80 border border-border/30 rounded-xl text-xs font-bold hover:text-accent hover:border-accent/30 shadow-3xs hover:shadow-xs transition-all duration-300 cursor-pointer text-slate-600 dark:text-slate-300"
           >
             <Sliders className="w-3.5 h-3.5 text-accent" />
             <span>{lang === 'ar' ? 'الإعدادات السريعة' : 'Quick Settings'}</span>
@@ -704,10 +708,11 @@ ${textToImprove}`;
             <ChevronRight className={cn("w-3.5 h-3.5", lang === 'en' && "rotate-180")} />
           )}
         </button>
+        
         {selectedPrompt ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             
-             {/* Top Tab Bar matching mockup */}
+             {/* Top Tab Bar */}
              <div className="h-[44px] bg-slate-100 dark:bg-surface2-dark/20 px-6 border-b border-border/20 flex items-end gap-1.5 overflow-x-auto shrink-0 select-none scrollbar-none">
                {openTabs.map(tId => {
                  const prompt = data.prompts.find(p => p.id === tId);
@@ -756,458 +761,474 @@ ${textToImprove}`;
                       />
                     )}
                   </div>
-                );
-              })}
-            </div>
+                 );
+               })}
+             </div>
 
-            {/* Rich Editor Toolbar matching mockup */}
-            <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 select-none shrink-0 shadow-sm z-10">
-              
-              {/* Left format/style helpers */}
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                
-                {/* Mock Image Icon */}
-                <button 
-                  onClick={handleImageToolbarClick} 
-                  title={t('editor.tooltipImage')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
-                >
-                  <Image className="w-4 h-4 opacity-70" />
-                </button>
+             {/* Rich Editor Toolbar */}
+             <div className="min-h-[64px] py-2 border-b border-border/40 bg-white dark:bg-surface-dark px-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 select-none shrink-0 shadow-sm z-10">
+               
+               {/* Left format/style helpers */}
+               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                 
+                 {/* Group 1: History */}
+                 <div className="flex items-center gap-0.5">
+                   <button 
+                     onClick={handleUndo} 
+                     type="button"
+                     title={t('editor.tooltipUndo')} 
+                     className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"
+                   >
+                     <Undo className="w-3.5 h-3.5 opacity-80" />
+                   </button>
+                   <button 
+                     onClick={handleRedo} 
+                     type="button"
+                     title={t('editor.tooltipRedo')} 
+                     className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"
+                   >
+                     <Redo className="w-3.5 h-3.5 opacity-80" />
+                   </button>
+                 </div>
 
-                <div className="w-[1px] h-5 bg-border mx-1" />
+                 <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-                {/* Undo / Redo */}
-                <button 
-                  onClick={handleUndo} 
-                  title={t('editor.tooltipUndo')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
-                >
-                  <Undo className="w-4 h-4 opacity-70" />
-                </button>
-                <button 
-                  onClick={handleRedo} 
-                  title={t('editor.tooltipRedo')} 
-                  className="p-2 hover:bg-border/20 rounded-lg cursor-pointer"
-                >
-                  <Redo className="w-4 h-4 opacity-70" />
-                </button>
+                 {/* Group 2: Font & Size */}
+                 <div className="flex items-center gap-1.5">
+                   <select 
+                     value={fontFamily}
+                     onChange={e => setFontFamily(e.target.value)}
+                     className="h-7 px-1.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                   >
+                     <option value="font-sans">{t('editor.fontSans')}</option>
+                     <option value="font-mono">{t('editor.fontMono')}</option>
+                     <option value="font-serif">{t('editor.fontSerif')}</option>
+                   </select>
 
-                <div className="w-[1px] h-5 bg-border mx-1" />
+                   <select 
+                     value={fontSize}
+                     onChange={e => setFontSize(e.target.value)}
+                     className="h-7 px-1.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                   >
+                     <option value="text-xs">12px</option>
+                     <option value="text-sm">14px</option>
+                     <option value="text-base">16px</option>
+                     <option value="text-lg">18px</option>
+                     <option value="text-xl">20px</option>
+                   </select>
 
-                {/* Font Family selector */}
-                <select 
-                  value={fontFamily}
-                  onChange={e => setFontFamily(e.target.value)}
-                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer"
-                >
-                  <option value="font-sans">{t('editor.fontSans')}</option>
-                  <option value="font-mono">{t('editor.fontMono')}</option>
-                  <option value="font-serif">{t('editor.fontSerif')}</option>
-                </select>
-
-                {/* Font Size selector */}
-                <select 
-                  value={fontSize}
-                  onChange={e => setFontSize(e.target.value)}
-                  className="h-8 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black outline-none cursor-pointer"
-                >
-                  <option value="text-xs">12px</option>
-                  <option value="text-sm">14px</option>
-                  <option value="text-base">16px</option>
-                  <option value="text-lg">18px</option>
-                  <option value="text-xl">20px</option>
-                </select>
-
-                <div className="w-[1px] h-5 bg-border mx-1" />
-
-                {/* Text Color Picker (Pen) */}
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setIsPenDropdownOpen(!isPenDropdownOpen);
-                      setIsHighlighterDropdownOpen(false);
-                      setIsHeaderDropdownOpen(false);
-                    }}
-                    title={t('editor.tooltipColor')} 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
-                  >
-                    <Palette className="w-4 h-4 opacity-70 text-accent" />
-                  </button>
-                  {isPenDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
-                      {PEN_COLORS.map((color, idx) => (
-                        <button 
-                          key={idx}
-                          onClick={() => insertColorText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          <span className={cn("w-3 h-3 rounded-full shrink-0", color.class)} />
-                          <span>{t(`editor.color${color.name}`)}</span>
-                        </button>
-                      ))}
-                      <button 
-                        onClick={() => insertColorText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
-                      >
-                        <span className="w-3 h-3 rounded-full shrink-0 bg-transparent border border-border" />
-                        <span>{t('editor.clearFormat')}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Highlighter Picker */}
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setIsHighlighterDropdownOpen(!isHighlighterDropdownOpen);
-                      setIsPenDropdownOpen(false);
-                      setIsHeaderDropdownOpen(false);
-                    }}
-                    title={t('editor.tooltipHighlight')} 
-                    className="p-2 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
-                  >
-                    <Highlighter className="w-4 h-4 opacity-70 text-warning" />
-                  </button>
-                  {isHighlighterDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
-                      {HIGHLIGHT_COLORS.map((color, idx) => (
-                        <button 
-                          key={idx}
-                          onClick={() => insertHighlightText(color.hex)}
-                          className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          <span className={cn("w-3 h-3 rounded shrink-0", color.class)} />
-                          <span>{t(`editor.highlight${color.name}`)}</span>
-                        </button>
-                      ))}
-                      <button 
-                        onClick={() => insertHighlightText('')}
-                        className="px-2 py-1.5 rounded-lg text-[10px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
-                      >
-                        <span className="w-3 h-3 rounded shrink-0 bg-transparent border border-border" />
-                        <span>{t('editor.clearHighlight')}</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-[1px] h-5 bg-border mx-1" />
-
-                {/* Headers Dropdown */}
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setIsHeaderDropdownOpen(!isHeaderDropdownOpen);
-                      setIsPenDropdownOpen(false);
-                      setIsHighlighterDropdownOpen(false);
-                    }}
-                    className="h-8 px-2.5 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[10px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer"
-                  >
-                    <Heading className="w-3.5 h-3.5 text-accent" />
-                    <span>{t('editor.headings')}</span>
-                  </button>
-                  {isHeaderDropdownOpen && (
-                    <div className="absolute right-0 top-9 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
-                      {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
-                        <button 
-                          key={idx}
-                          onClick={() => insertHeader(tag)}
-                          className="px-3 py-1.5 rounded-lg text-[10px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          {t('editor.heading')} H{idx + 1}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-[1px] h-5 bg-border mx-1" />
-
-                {/* Alignment */}
-                <div className="flex bg-surface2-light dark:bg-surface2-dark p-0.5 rounded-lg border border-border/30">
-                  <button 
-                    onClick={() => handleAlignmentChange('right')}
-                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title={t('editor.tooltipAlignRight')}
-                  >
-                    <AlignRight className="w-3.5 h-3.5" />
-                  </button>
-                  <button 
-                    onClick={() => handleAlignmentChange('center')}
-                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title={t('editor.tooltipAlignCenter')}
-                  >
-                    <AlignCenter className="w-3.5 h-3.5" />
-                  </button>
-                  <button 
-                    onClick={() => handleAlignmentChange('left')}
-                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title={t('editor.tooltipAlignLeft')}
-                  >
-                    <AlignLeft className="w-3.5 h-3.5" />
-                  </button>
-                  <button 
-                    onClick={() => handleAlignmentChange('justify')}
-                    className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
-                    title={t('editor.tooltipAlignJustify')}
-                  >
-                    <AlignJustify className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="w-[1px] h-5 bg-border mx-1" />
-
-                {/* Formatting Helpers */}
-                <button onClick={() => execFormat('bold')} title={t('editor.tooltipBold')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Bold className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('italic')} title={t('editor.tooltipItalic')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Italic className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('insertUnorderedList')} title={t('editor.tooltipList')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><List className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={() => execFormat('formatBlock', '<pre>')} title={t('editor.tooltipCode')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Code className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={insertLink} title={t('editor.tooltipLink')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><LinkIcon className="w-3.5 h-3.5 opacity-60" /></button>
-                <button onClick={handleImageToolbarClick} title={t('editor.tooltipImage')} className="p-2 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300"><Image className="w-3.5 h-3.5 opacity-60" /></button>
-
-              </div>
-
-              {/* Right View Switcher & AI Enhancer Toolbar */}
-              <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
-                  <button
-                    onClick={() => setViewMode('edit')}
-                    className={cn(
-                      "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
-                      viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
-                    )}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    {t('notepad.editMode')}
-                  </button>
-                  <button
-                    onClick={() => setViewMode('preview')}
-                    className={cn(
-                      "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
-                      viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
-                    )}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    {t('notepad.previewMode')}
-                  </button>
-                </div>
-                {hasAnyAi && (
-                  <div className="flex items-center gap-1.5 p-1 bg-white/70 dark:bg-slate-900/85 border border-border/30 rounded-full shadow-sm select-none">
-                     {isGeminiActive && (
-                       <button
-                         type="button"
-                         onClick={() => handleAiEnhance('gemini')}
-                         disabled={aiEnhancing}
-                         className={cn(
-                           "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
-                           aiEnhancingProvider === 'gemini' 
-                             ? "bg-indigo-500/20 text-indigo-500 border-indigo-500/30 shadow-indigo-500/20 shadow-sm animate-pulse" 
-                             : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-indigo-500 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:scale-105"
-                         )}
-                       >
-                         <Sparkles className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'gemini' && "animate-spin text-indigo-500")} />
-                         <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
-                           تحسين صياغة البرومبت عبر Gemini
-                         </span>
-                       </button>
+                   {/* Headers Dropdown */}
+                   <div className="relative">
+                     <button 
+                       onClick={() => {
+                         setIsHeaderDropdownOpen(!isHeaderDropdownOpen);
+                         setIsPenDropdownOpen(false);
+                         setIsHighlighterDropdownOpen(false);
+                       }}
+                       type="button"
+                       className="h-7 px-2 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-lg text-[9px] font-black flex items-center gap-1 hover:bg-border/20 cursor-pointer text-slate-700 dark:text-slate-200"
+                     >
+                       <Heading className="w-3 h-3 text-accent" />
+                       <span>{t('editor.headings')}</span>
+                     </button>
+                     {isHeaderDropdownOpen && (
+                       <div className="absolute right-0 top-8 w-24 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1 z-50 flex flex-col gap-0.5 text-start">
+                         {['#', '##', '###', '####', '#####', '######'].map((tag, idx) => (
+                           <button 
+                             key={idx}
+                             type="button"
+                             onClick={() => insertHeader(tag)}
+                             className="px-2.5 py-1.5 rounded-lg text-[9px] font-black hover:bg-surface2-light dark:hover:bg-surface2-dark text-start cursor-pointer text-slate-700 dark:text-slate-200"
+                           >
+                             {t('editor.heading')} H{idx + 1}
+                           </button>
+                         ))}
+                       </div>
                      )}
-                     {isOpenAIActive && (
-                       <button
-                         type="button"
-                         onClick={() => handleAiEnhance('openai')}
-                         disabled={aiEnhancing}
-                         className={cn(
-                           "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
-                           aiEnhancingProvider === 'openai' 
-                             ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30 shadow-emerald-500/20 shadow-sm animate-pulse" 
-                             : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/20 hover:scale-105"
-                         )}
-                       >
-                         <Cpu className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'openai' && "animate-spin text-emerald-500")} />
-                         <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
-                           تحسين صياغة البرومبت عبر OpenAI
-                         </span>
-                       </button>
+                   </div>
+                 </div>
+
+                 <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
+
+                 {/* Group 3: Text Formatting */}
+                 <div className="flex items-center gap-0.5">
+                   <button onClick={() => execFormat('bold')} title={t('editor.tooltipBold')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><Bold className="w-3.5 h-3.5 opacity-80" /></button>
+                   <button onClick={() => execFormat('italic')} title={t('editor.tooltipItalic')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><Italic className="w-3.5 h-3.5 opacity-80" /></button>
+                   
+                   {/* Pen Dropdown */}
+                   <div className="relative">
+                     <button 
+                       onClick={() => {
+                         setIsPenDropdownOpen(!isPenDropdownOpen);
+                         setIsHighlighterDropdownOpen(false);
+                         setIsHeaderDropdownOpen(false);
+                       }}
+                       type="button"
+                       title={t('editor.tooltipColor')} 
+                       className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                     >
+                       <Palette className="w-3.5 h-3.5 opacity-80 text-accent" />
+                     </button>
+                     {isPenDropdownOpen && (
+                       <div className="absolute right-0 top-8 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
+                         {PEN_COLORS.map((color, idx) => (
+                           <button 
+                             key={idx}
+                             type="button"
+                             onClick={() => insertColorText(color.hex)}
+                             className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                           >
+                             <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", color.class)} />
+                             <span>{t(`editor.color${color.name}`)}</span>
+                           </button>
+                         ))}
+                         <button 
+                           type="button"
+                           onClick={() => insertColorText('')}
+                           className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                         >
+                           <span className="w-2.5 h-2.5 rounded-full shrink-0 bg-transparent border border-border" />
+                           <span>{t('editor.clearFormat')}</span>
+                         </button>
+                       </div>
                      )}
-                     {isClaudeActive && (
-                       <button
-                         type="button"
-                         onClick={() => handleAiEnhance('claude')}
-                         disabled={aiEnhancing}
-                         className={cn(
-                           "w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 relative group cursor-pointer border border-transparent",
-                           aiEnhancingProvider === 'claude' 
-                             ? "bg-orange-500/20 text-orange-500 border-orange-500/30 shadow-orange-500/20 shadow-sm animate-pulse" 
-                             : "bg-surface2-light dark:bg-surface2-dark text-slate-500 hover:text-orange-500 hover:bg-orange-500/10 hover:border-orange-500/20 hover:scale-105"
-                         )}
-                       >
-                         <Brain className={cn("w-3.5 h-3.5", aiEnhancingProvider === 'claude' && "animate-spin text-orange-500")} />
-                         <span className="absolute bottom-full mb-2 hidden group-hover:block text-[9px] font-black bg-slate-950/90 dark:bg-slate-900/95 text-white px-2 py-1 rounded-lg border border-border/10 shadow-md whitespace-nowrap z-50">
-                           تحسين صياغة البرومبت عبر Claude
-                         </span>
-                       </button>
+                   </div>
+
+                   {/* Highlighter Dropdown */}
+                   <div className="relative">
+                     <button 
+                       onClick={() => {
+                         setIsHighlighterDropdownOpen(!isHighlighterDropdownOpen);
+                         setIsPenDropdownOpen(false);
+                         setIsHeaderDropdownOpen(false);
+                       }}
+                       type="button"
+                       title={t('editor.tooltipHighlight')} 
+                       className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer flex items-center gap-0.5 text-slate-600 dark:text-slate-300"
+                     >
+                       <Highlighter className="w-3.5 h-3.5 opacity-80 text-warning" />
+                     </button>
+                     {isHighlighterDropdownOpen && (
+                       <div className="absolute right-0 top-8 w-28 bg-white dark:bg-surface-dark border border-border/60 rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 text-start">
+                         {HIGHLIGHT_COLORS.map((color, idx) => (
+                           <button 
+                             key={idx}
+                             type="button"
+                             onClick={() => insertHighlightText(color.hex)}
+                             className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full cursor-pointer text-slate-700 dark:text-slate-200"
+                           >
+                             <span className={cn("w-2.5 h-2.5 rounded shrink-0", color.class)} />
+                             <span>{t(`editor.highlight${color.name}`)}</span>
+                           </button>
+                         ))}
+                         <button 
+                           type="button"
+                           onClick={() => insertHighlightText('')}
+                           className="px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-surface2-light dark:hover:bg-surface2-dark text-start flex items-center gap-2 w-full border-t border-border/30 mt-1 cursor-pointer text-slate-700 dark:text-slate-200"
+                         >
+                           <span className="w-2.5 h-2.5 rounded shrink-0 bg-transparent border border-border" />
+                           <span>{t('editor.clearHighlight')}</span>
+                         </button>
+                       </div>
                      )}
-                  </div>
-                )}
-              </div>
+                   </div>
+                 </div>
 
-            </div>
+                 <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-            {/* Note Title & Content Editor */}
-            <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full flex flex-col gap-6">
-              
-              <input id="notepad-image-uploader" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                 {/* Group 4: Alignment */}
+                 <div className="flex bg-surface2-light dark:bg-surface2-dark p-0.5 rounded-lg border border-border/30">
+                   <button 
+                     onClick={() => handleAlignmentChange('right')}
+                     type="button"
+                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'right' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                     title={t('editor.tooltipAlignRight')}
+                   >
+                     <AlignRight className="w-3.5 h-3.5" />
+                   </button>
+                   <button 
+                     onClick={() => handleAlignmentChange('center')}
+                     type="button"
+                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'center' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                     title={t('editor.tooltipAlignCenter')}
+                   >
+                     <AlignCenter className="w-3.5 h-3.5" />
+                   </button>
+                   <button 
+                     onClick={() => handleAlignmentChange('left')}
+                     type="button"
+                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'left' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                     title={t('editor.tooltipAlignLeft')}
+                   >
+                     <AlignLeft className="w-3.5 h-3.5" />
+                   </button>
+                   <button 
+                     onClick={() => handleAlignmentChange('justify')}
+                     type="button"
+                     className={cn("p-1 rounded-md transition-colors cursor-pointer", alignment === 'justify' ? "bg-white dark:bg-surface-dark text-accent shadow-sm" : "opacity-45")}
+                     title={t('editor.tooltipAlignJustify')}
+                   >
+                     <AlignJustify className="w-3.5 h-3.5" />
+                   </button>
+                 </div>
 
-              {/* Title Input */}
-              <input 
-                type="text"
-                value={selectedPrompt.title}
-                onChange={e => handleTitleChange(e.target.value)}
-                className="w-full bg-transparent border-none outline-none text-2xl font-black text-slate-800 dark:text-slate-100 placeholder-slate-400 py-2 border-b border-border/10 focus:border-accent/30 transition-all"
-                placeholder={t('notepad.titlePlaceholder')}
-              />
+                 <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-              {/* Text Editor content */}
-              {viewMode === 'edit' ? (
-                <div className={cn(
-                  "flex-1 flex flex-col min-h-[150px] relative transition-all duration-500 rounded-xl p-2",
-                  aiEnhancing && "animate-pulse",
-                  aiEnhancing && aiEnhancingProvider === 'gemini' && "border border-indigo-500/30 bg-indigo-500/[0.01] shadow-[0_0_20px_rgba(99,102,241,0.05)]",
-                  aiEnhancing && aiEnhancingProvider === 'openai' && "border border-emerald-500/30 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.05)]",
-                  aiEnhancing && aiEnhancingProvider === 'claude' && "border border-orange-500/30 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.05)]"
-                )}>
+                 {/* Group 5: Lists & Code */}
+                 <div className="flex items-center gap-0.5">
+                   <button onClick={() => execFormat('insertUnorderedList')} title={t('editor.tooltipList')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><List className="w-3.5 h-3.5 opacity-80" /></button>
+                   <button onClick={() => execFormat('formatBlock', '<pre>')} title={t('editor.tooltipCode')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><Code className="w-3.5 h-3.5 opacity-80" /></button>
+                 </div>
 
+                 <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
 
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    onInput={handleEditorInput}
-                    onPaste={handlePaste}
-                    className={cn(
-                      "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[150px] text-start focus:outline-none overflow-y-auto",
-                      fontFamily,
-                      fontSize
-                    )}
-                    style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
-                    {...{ placeholder: t('notepad.contentPlaceholder') }}
-                  />
-                  <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between flex-wrap gap-2 select-none">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span>عدد الأحرف: {selectedPrompt ? selectedPrompt.content.length : 0}</span>
-                      
-                      {/* AI Enhancer Buttons - Compact bottom right placement adjacent to settings */}
-                      {viewMode === 'edit' && hasAnyAi && (
-                        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-surface2-dark border border-border/30 rounded-lg shadow-3xs">
-                          {isGeminiActive && (
-                            <button
-                              type="button"
-                              onClick={() => handleAiEnhance('gemini')}
-                              disabled={aiEnhancing}
-                              className={cn(
-                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                                aiEnhancingProvider === 'gemini'
-                                  ? "bg-indigo-500 text-white border-indigo-600 shadow-sm"
-                                  : "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20 hover:bg-indigo-500/20 hover:scale-105"
-                              )}
-                              title={t('editor.enhanceGemini')}
-                            >
-                              <Sparkles className={cn("w-3 h-3", aiEnhancingProvider === 'gemini' && "animate-spin")} />
-                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                              </span>
-                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                {t('editor.geminiReady')}
-                              </span>
-                            </button>
-                          )}
-                          {isOpenAIActive && (
-                            <button
-                              type="button"
-                              onClick={() => handleAiEnhance('openai')}
-                              disabled={aiEnhancing}
-                              className={cn(
-                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                                aiEnhancingProvider === 'openai'
-                                  ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
-                                  : "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20 hover:scale-105"
-                              )}
-                              title={t('editor.enhanceOpenAI')}
-                            >
-                              <Cpu className={cn("w-3 h-3", aiEnhancingProvider === 'openai' && "animate-spin")} />
-                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                              </span>
-                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                {t('editor.openaiReady')}
-                              </span>
-                            </button>
-                          )}
-                          {isClaudeActive && (
-                            <button
-                              type="button"
-                              onClick={() => handleAiEnhance('claude')}
-                              disabled={aiEnhancing}
-                              className={cn(
-                                "w-6 h-6 rounded-md flex items-center justify-center transition-all duration-300 relative group cursor-pointer border",
-                                aiEnhancingProvider === 'claude'
-                                  ? "bg-orange-500 text-white border-orange-600 shadow-sm"
-                                  : "bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-orange-500/20 hover:bg-orange-500/20 hover:scale-105"
-                              )}
-                              title={t('editor.enhanceClaude')}
-                            >
-                              <Brain className={cn("w-3 h-3", aiEnhancingProvider === 'claude' && "animate-spin")} />
-                              <span className="absolute -top-0.5 -left-0.5 w-2 h-2 bg-success rounded-full border border-white dark:border-surface-dark flex items-center justify-center">
-                                <Check className="w-1.5 h-1.5 text-white stroke-[3px]" />
-                              </span>
-                              <span className="absolute bottom-full mb-1.5 hidden group-hover:block text-[9px] font-bold bg-slate-950/90 text-white px-2 py-1 rounded-md shadow-md whitespace-nowrap z-50">
-                                {t('editor.claudeReady')}
-                              </span>
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> {t('notepad.promptAutoSaved')}</span>
-                  </div>
+                 {/* Group 6: Media & Links */}
+                 <div className="flex items-center gap-0.5">
+                   <button onClick={insertLink} title={t('editor.tooltipLink')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><LinkIcon className="w-3.5 h-3.5 opacity-80" /></button>
+                   <button onClick={handleImageToolbarClick} title={t('editor.tooltipImage')} className="p-1.5 hover:bg-border/20 rounded-lg cursor-pointer text-slate-600 dark:text-slate-300 transition-colors"><Image className="w-3.5 h-3.5 opacity-80" /></button>
+                 </div>
 
-                  {/* AI Loading/Generating Overlay */}
-                  {aiEnhancing && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-surface-dark/30 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
-                      <div className={cn(
-                        "flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border shadow-xl transition-all duration-300",
-                        aiEnhancingProvider === 'gemini' && "border-indigo-500/30 text-indigo-500 shadow-indigo-500/5",
-                        aiEnhancingProvider === 'openai' && "border-emerald-500/30 text-emerald-500 shadow-emerald-500/5",
-                        aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
-                      )}>
-                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                        <span className="text-xs font-black">{t('editor.aiEnhancing')}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className={cn(
-                  "flex-1 prose prose-sm dark:prose-invert max-w-none leading-loose",
-                  fontFamily,
-                  fontSize,
-                  alignment === 'center' ? 'text-center' : alignment === 'left' ? 'text-left' : alignment === 'justify' ? 'text-justify' : 'text-start'
-                )}>
-                  <Markdown rehypePlugins={[rehypeRaw]}>{selectedPrompt.content || (lang === 'ar' ? '_لا توجد نصوص للمعاينة..._' : '_No text to preview..._')}</Markdown>
-                </div>
-              )}
+                 {/* Group 7: AI Enhance */}
+                 {hasAnyAi && (
+                   <>
+                     <div className="w-[1px] h-4 bg-border/40 mx-1 my-auto shrink-0" />
+                     <button
+                       type="button"
+                       onClick={() => setIsAiPanelOpen(!isAiPanelOpen)}
+                       className={cn(
+                         "h-7 px-2.5 rounded-lg text-[9px] font-black flex items-center gap-1.5 transition-all cursor-pointer border",
+                         isAiPanelOpen 
+                           ? "bg-accent/15 text-accent border-accent/30 shadow-sm"
+                           : "bg-surface2-light dark:bg-surface2-dark border-border/30 hover:bg-border/20 text-slate-700 dark:text-slate-200"
+                       )}
+                       title={t('editor.aiEnhance')}
+                     >
+                       <Sparkles className="w-3 h-3" />
+                       <span>{t('editor.aiEnhance')}</span>
+                     </button>
+                   </>
+                 )}
+               </div>
 
-            </div>
+               {/* Right View Switcher & AI Enhancer Toolbar */}
+               <div className="flex flex-col items-end gap-1.5 shrink-0">
+                 <div className="flex p-0.5 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 select-none">
+                   <button
+                     onClick={() => setViewMode('edit')}
+                     className={cn(
+                       "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
+                       viewMode === 'edit' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
+                     )}
+                   >
+                     <Edit className="w-3.5 h-3.5" />
+                     {t('notepad.editMode')}
+                   </button>
+                   <button
+                     onClick={() => setViewMode('preview')}
+                     className={cn(
+                       "px-4 py-1.5 rounded-lg text-[10px] font-black transition-all flex items-center gap-1.5 cursor-pointer", 
+                       viewMode === 'preview' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-45 hover:opacity-100"
+                     )}
+                   >
+                     <Eye className="w-3.5 h-3.5" />
+                     {t('notepad.previewMode')}
+                   </button>
+                 </div>
+               </div>
+
+             </div>
+
+             {/* Collapsible AI Enhancer Panel */}
+             {isAiPanelOpen && viewMode === 'edit' && (
+               <div className="p-4 bg-slate-50 dark:bg-surface2-dark/30 border-b border-border/30 space-y-3 transition-all duration-300 px-6">
+                 <div className="flex items-center justify-between select-none">
+                   <div className="flex items-center gap-2">
+                     <Sparkles className="w-4 h-4 text-accent" />
+                     <span className="text-xs font-black">{lang === 'ar' ? 'مساعد الذكاء الاصطناعي لتحسين البرومبت' : 'AI Prompt Enhancer'}</span>
+                   </div>
+                   <button 
+                     type="button"
+                     onClick={() => setIsAiPanelOpen(false)}
+                     className="p-1 rounded-lg hover:bg-border/20 text-muted-light dark:text-muted-dark cursor-pointer"
+                   >
+                     <X className="w-3.5 h-3.5" />
+                   </button>
+                 </div>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 select-none">
+                   {/* Gemini Provider */}
+                   <div className={cn(
+                     "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                     isGeminiActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                   )}>
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Google Gemini</span>
+                       <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isGeminiActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                         {isGeminiActive ? t('editor.geminiReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                       </span>
+                     </div>
+                     <Button
+                       size="sm"
+                       variant={isGeminiActive ? 'primary' : 'secondary'}
+                       disabled={!isGeminiActive || aiEnhancing}
+                       onClick={() => handleAiEnhance('gemini')}
+                       className="w-full text-[10px] h-8 font-black"
+                     >
+                       {aiEnhancingProvider === 'gemini' ? (
+                         <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                         </>
+                       ) : (
+                         lang === 'ar' ? 'تحسين باستخدام Gemini' : 'Enhance with Gemini'
+                       )}
+                     </Button>
+                   </div>
+
+                   {/* OpenAI Provider */}
+                   <div className={cn(
+                     "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                     isOpenAIActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                   )}>
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">OpenAI GPT</span>
+                       <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isOpenAIActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                         {isOpenAIActive ? t('editor.openaiReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                       </span>
+                     </div>
+                     <Button
+                       size="sm"
+                       variant={isOpenAIActive ? 'primary' : 'secondary'}
+                       disabled={!isOpenAIActive || aiEnhancing}
+                       onClick={() => handleAiEnhance('openai')}
+                       className="w-full text-[10px] h-8 font-black"
+                     >
+                       {aiEnhancingProvider === 'openai' ? (
+                         <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                         </>
+                       ) : (
+                         lang === 'ar' ? 'تحسين باستخدام OpenAI' : 'Enhance with OpenAI'
+                       )}
+                     </Button>
+                   </div>
+
+                   {/* Claude Provider */}
+                   <div className={cn(
+                     "p-3 rounded-xl border flex flex-col gap-2 transition-all",
+                     isClaudeActive ? "border-border/60 bg-white dark:bg-surface-dark" : "border-border/30 bg-transparent opacity-60"
+                   )}>
+                     <div className="flex items-center justify-between">
+                       <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Anthropic Claude</span>
+                       <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-full", isClaudeActive ? "bg-success/10 text-success" : "bg-danger/10 text-danger")}>
+                         {isClaudeActive ? t('editor.claudeReady') : (lang === 'ar' ? 'مفتاح غير متوفر' : 'Key Missing')}
+                       </span>
+                     </div>
+                     <Button
+                       size="sm"
+                       variant={isClaudeActive ? 'primary' : 'secondary'}
+                       disabled={!isClaudeActive || aiEnhancing}
+                       onClick={() => handleAiEnhance('claude')}
+                       className="w-full text-[10px] h-8 font-black"
+                     >
+                       {aiEnhancingProvider === 'claude' ? (
+                         <>
+                          <RefreshCw className="w-3 h-3 animate-spin me-1.5" />
+                          {lang === 'ar' ? 'جاري التحسين...' : 'Enhancing...'}
+                         </>
+                       ) : (
+                         lang === 'ar' ? 'تحسين باستخدام Claude' : 'Enhance with Claude'
+                       )}
+                     </Button>
+                   </div>
+                 </div>
+               </div>
+             )}
+
+             {/* Note Title & Content Editor */}
+             <div className="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto w-full flex flex-col gap-6">
+               
+               <input id="notepad-image-uploader" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+
+               {/* Title Input */}
+               <input 
+                 type="text"
+                 value={selectedPrompt.title}
+                 onChange={e => handleTitleChange(e.target.value)}
+                 className="w-full bg-transparent border-none outline-none text-2xl font-black text-slate-800 dark:text-slate-100 placeholder-slate-400 py-2 border-b border-border/10 focus:border-accent/30 transition-all text-start"
+                 placeholder={t('notepad.titlePlaceholder')}
+               />
+
+               {/* Text Editor content */}
+               {viewMode === 'edit' ? (
+                 <div className={cn(
+                   "flex-1 flex flex-col min-h-[150px] relative transition-all duration-500 rounded-xl p-2",
+                   aiEnhancing && "animate-pulse",
+                   aiEnhancing && aiEnhancingProvider === 'gemini' && "border border-indigo-500/30 bg-indigo-500/[0.01] shadow-[0_0_20px_rgba(99,102,241,0.05)]",
+                   aiEnhancing && aiEnhancingProvider === 'openai' && "border border-emerald-500/30 bg-emerald-500/[0.01] shadow-[0_0_20px_rgba(16,185,129,0.05)]",
+                   aiEnhancing && aiEnhancingProvider === 'claude' && "border border-orange-500/30 bg-orange-500/[0.01] shadow-[0_0_20px_rgba(249,115,22,0.05)]"
+                 )}>
+
+                   <div
+                     ref={editorRef}
+                     contentEditable
+                     onInput={handleEditorInput}
+                     onPaste={handlePaste}
+                     className={cn(
+                       "w-full flex-1 bg-transparent border-none outline-none resize-none leading-loose placeholder-slate-400/50 min-h-[150px] text-start focus:outline-none overflow-y-auto",
+                       fontFamily,
+                       fontSize
+                     )}
+                     style={{ direction: lang === 'ar' ? 'rtl' : 'ltr' }}
+                     {...{ placeholder: t('notepad.contentPlaceholder') }}
+                   />
+                   <div className="pt-4 border-t border-border/20 text-[10px] font-bold opacity-45 flex items-center justify-between flex-wrap gap-2 select-none">
+                     <div className="flex items-center gap-3 flex-wrap">
+                       <span>{lang === 'ar' ? `عدد الأحرف: ${selectedPrompt ? selectedPrompt.content.length : 0}` : `Characters: ${selectedPrompt ? selectedPrompt.content.length : 0}`}</span>
+                     </div>
+                     <span className="flex items-center gap-1 text-success"><Check className="w-3 h-3" /> {t('notepad.promptAutoSaved')}</span>
+                   </div>
+
+                   {/* AI Loading/Generating Overlay */}
+                   {aiEnhancing && (
+                     <div className="absolute inset-0 flex items-center justify-center bg-white/30 dark:bg-surface-dark/30 backdrop-blur-xs rounded-xl z-20 pointer-events-none select-none">
+                       <div className={cn(
+                         "flex items-center gap-2.5 p-3 rounded-2xl bg-white dark:bg-surface2-dark border shadow-xl transition-all duration-300",
+                         aiEnhancingProvider === 'gemini' && "border-indigo-500/30 text-indigo-500 shadow-indigo-500/5",
+                         aiEnhancingProvider === 'openai' && "border-emerald-500/30 text-emerald-500 shadow-emerald-500/5",
+                         aiEnhancingProvider === 'claude' && "border-orange-500/30 text-orange-500 shadow-orange-500/5"
+                       )}>
+                         <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                         <span className="text-xs font-black">{t('editor.aiEnhancing')}</span>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               ) : (
+                 <div className={cn(
+                   "flex-1 prose prose-sm dark:prose-invert max-w-none leading-loose",
+                   fontFamily,
+                   fontSize,
+                   alignment === 'center' ? 'text-center' : alignment === 'left' ? 'text-left' : alignment === 'justify' ? 'text-justify' : 'text-start'
+                 )}>
+                   <Markdown rehypePlugins={[rehypeRaw]}>{selectedPrompt.content || (lang === 'ar' ? '_لا توجد نصوص للمعاينة..._' : '_No text to preview..._')}</Markdown>
+                 </div>
+               )}
+
+             </div>
 
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center select-none py-20">
-            <FileText className="w-16 h-16 text-accent opacity-20" />
-            <h3 className="text-base font-black">{lang === 'ar' ? 'المفكرة فارغة' : 'Notepad is empty'}</h3>
-            <p className="text-xs font-medium opacity-50 max-w-xs leading-relaxed">{lang === 'ar' ? 'اختر برومبت من القائمة الجانبية أو اضغط على زر "جديد" لإنشاء برومبت في مجلدك.' : 'Select a prompt from the sidebar or click "New" to create a prompt in your folder.'}</p>
-            <Button onClick={() => handleCreatePromptInFolder('gemini')}>{t('notepad.newPromptBtn')}</Button>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title={lang === 'ar' ? 'المفكرة فارغة' : 'Notepad is empty'}
+            description={lang === 'ar' 
+              ? 'اختر برومبت من القائمة الجانبية لعرضه وتحريره، أو اضغط على زر الإضافة لإنشاء برومبت جديد في مجلدك.' 
+              : 'Select a prompt from the sidebar to view and edit it, or click the add button to create a new prompt in your folder.'}
+            actionLabel={t('notepad.newPromptBtn')}
+            onAction={() => handleCreatePromptInFolder('gemini')}
+          />
         )}
       </div>
  
@@ -1265,7 +1286,7 @@ ${textToImprove}`;
                       <Folder className="w-8 h-8 text-slate-400" style={{ color: folderEditColor }} />
                     )}
                   </div>
-                  <div className="flex-1 flex flex-col gap-1">
+                  <div className="flex-1 flex flex-col gap-1 text-start">
                     <input
                       type="file"
                       accept="image/*"

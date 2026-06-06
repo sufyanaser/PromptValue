@@ -4,10 +4,12 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Search, Filter, LayoutGrid, List, MoreVertical, Copy, Edit, Star, Trash2, ExternalLink, Check, CopyPlus, Calendar, Shield, Activity, User, ArrowUpDown, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { cn } from '../../lib/cn';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export function PromptsPage() {
   const { data, toggleFavorite, deletePrompt, duplicatePrompt, showToast, t, lang } = useApp();
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -94,6 +96,26 @@ export function PromptsPage() {
     duplicatePrompt(id);
     showToast(t('prompts.duplicateToast'), 'success');
   };
+
+  if (data.prompts.length === 0) {
+    return (
+      <div className="space-y-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+        <PageHeader
+          title={t('prompts.title')}
+          subtitle={t('prompts.subtitle')}
+        />
+        <Card className="p-8">
+          <EmptyState
+            icon={CopyPlus}
+            title={t('emptyStates.noPromptsTitle')}
+            description={t('emptyStates.noPromptsDesc')}
+            actionLabel={t('emptyStates.createFirstPromptBtn')}
+            onAction={() => navigate('/prompts/new')}
+          />
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -282,7 +304,21 @@ export function PromptsPage() {
             </div>
           </div>
 
-          {viewMode === 'list' ? (
+          {filteredPrompts.length === 0 ? (
+            <Card className="p-8">
+              <EmptyState
+                icon={Search}
+                title={t('emptyStates.noSearchResultsTitle')}
+                description={t('emptyStates.noSearchResultsDesc')}
+                actionLabel={t('emptyStates.resetFiltersBtn')}
+                onAction={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedTag('all');
+                }}
+              />
+            </Card>
+          ) : viewMode === 'list' ? (
             <Card className="overflow-hidden bg-white dark:bg-surface-dark border-border/40">
               <div className="overflow-x-auto">
                 <table className="w-full text-start border-collapse">
@@ -356,9 +392,6 @@ export function PromptsPage() {
                     })}
                   </tbody>
                 </table>
-                {filteredPrompts.length === 0 && (
-                  <div className="py-20 text-center opacity-40 italic font-medium">{t('prompts.noResults')}</div>
-                )}
               </div>
             </Card>
           ) : (
@@ -372,7 +405,7 @@ export function PromptsPage() {
                     className="w-full"
                   >
                     <Card 
-                      className={cn(
+                       className={cn(
                         "group hover:shadow-xl transition-all cursor-pointer border",
                         isSelected ? "border-accent ring-1 ring-accent" : "border-border/40"
                       )}

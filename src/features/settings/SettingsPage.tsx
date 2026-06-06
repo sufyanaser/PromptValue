@@ -5,22 +5,20 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Settings, Globe, Moon, Save, Database, Shield, Info, Keyboard, Sparkles, Cloud, Check } from 'lucide-react';
+import { Globe, Save, Database, Shield, Info, Keyboard, Sparkles, Cloud, Check, X, RefreshCw } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 export function SettingsPage() {
-  const { data, theme, setTheme, updateData, showToast, createBackup, t } = useApp();
+  const { data, theme, setTheme, updateData, showToast, createBackup, t, lang } = useApp();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = React.useState('general');
+  const [activeTab, setActiveTab] = React.useState('preferences');
   const [testingProvider, setTestingProvider] = React.useState<string | null>(null);
 
   const tabs = [
-    { id: 'general', name: t('settings.tabGeneral'), icon: Globe },
-    { id: 'ai', name: t('settings.tabAI'), icon: Sparkles },
-    { id: 'cloud', name: t('settings.tabCloud'), icon: Cloud },
-    { id: 'backup', name: t('settings.tabBackup'), icon: Shield },
-    { id: 'shortcuts', name: t('settings.tabShortcuts'), icon: Keyboard },
-    { id: 'about', name: t('settings.tabAbout'), icon: Info },
+    { id: 'preferences', name: t('settings.tabPreferences'), icon: Globe },
+    { id: 'ai', name: t('settings.tabAIProviders'), icon: Sparkles },
+    { id: 'data', name: t('settings.tabDataSafety'), icon: Shield },
+    { id: 'app', name: t('settings.tabApplication'), icon: Info },
   ];
 
   const handleSelectDirectory = async () => {
@@ -58,13 +56,14 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <PageHeader
         title={t('settings.title')}
         subtitle={t('settings.subtitle')}
       />
 
       <div className="grid grid-cols-12 gap-8">
+        {/* Navigation Tabs Card */}
         <div className="col-span-12 lg:col-span-3 space-y-4">
           <Card className="p-2 shadow-inner-sm bg-surface2-light dark:bg-surface2-dark border-transparent">
             {tabs.map((tab) => (
@@ -74,43 +73,52 @@ export function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "w-full text-start px-6 py-4 rounded-xl text-sm font-black transition-all flex items-center gap-3 cursor-pointer",
-                  activeTab === tab.id ? "bg-white dark:bg-surface-dark shadow-sm text-accent" : "opacity-50 hover:bg-white/50 dark:hover:bg-white/5"
+                  activeTab === tab.id 
+                    ? "bg-white dark:bg-surface-dark shadow-sm text-accent" 
+                    : "opacity-60 hover:bg-white/50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
                 )}
+                aria-selected={activeTab === tab.id}
+                role="tab"
               >
-                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-accent" : "opacity-40")} />
+                <tab.icon className={cn("w-4.5 h-4.5", activeTab === tab.id ? "text-accent" : "opacity-50")} />
                 {tab.name}
               </button>
             ))}
           </Card>
         </div>
 
-        <div className="col-span-12 lg:col-span-9 space-y-8">
-          {activeTab === 'general' && (
-            <section className="space-y-4">
-              <h3 className="text-xl font-black flex items-center gap-3">
-                <Globe className="w-6 h-6 text-accent" />
-                {t('settings.generalSettings')}
+        {/* Settings Panes */}
+        <div className="col-span-12 lg:col-span-9 space-y-6">
+          
+          {/* 1. USER PREFERENCES */}
+          {activeTab === 'preferences' && (
+            <section className="space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2.5 px-1">
+                <Globe className="w-5 h-5 text-accent" />
+                {t('settings.tabPreferences')}
               </h3>
+              
               <div className="grid grid-cols-1 gap-4">
-                <Card>
+                {/* Theme Setting */}
+                <Card className="hover:border-border/60 transition-colors">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.visualTheme')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.themeDesc')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex flex-col gap-1 text-start">
+                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.visualTheme')}</span>
+                        <span className="text-xs opacity-60 font-medium">{t('settings.themeDesc')}</span>
                       </div>
-                      <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40">
+                      <div className="flex p-1 bg-surface2-light dark:bg-surface2-dark rounded-xl border border-border/40 self-start sm:self-auto">
                         <button
                           type="button"
                           onClick={() => setTheme('light')}
-                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'light' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
+                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'light' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-50")}
                         >
                           {t('settings.themeLight')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setTheme('dark')}
-                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'dark' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-40")}
+                          className={cn("px-4 py-2 rounded-lg text-xs font-black transition-all cursor-pointer", theme === 'dark' ? "bg-white dark:bg-surface-dark shadow text-accent" : "opacity-50")}
                         >
                           {t('settings.themeDark')}
                         </button>
@@ -119,58 +127,62 @@ export function SettingsPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                {/* Language Setting */}
+                <Card className="hover:border-border/60 transition-colors">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.appLanguage')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.languageDesc')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex flex-col gap-1 text-start">
+                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.appLanguage')}</span>
+                        <span className="text-xs opacity-60 font-medium">{t('settings.languageDesc')}</span>
                       </div>
                       <select
                         value={data.settings.language || 'ar'}
                         onChange={e => updateData({ settings: { ...data.settings, language: e.target.value as any } })}
-                        className="h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
+                        className="h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200 self-start sm:self-auto min-w-[140px]"
                       >
                         <option value="ar">العربية (Arabic)</option>
-                        <option value="en">الإنجليزية (English)</option>
+                        <option value="en">English (English)</option>
                       </select>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card>
+                {/* Autosave Switch */}
+                <Card className="hover:border-border/60 transition-colors">
                   <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.autosaveLabel')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.visualTheme') === 'Light' ? t('settings.autosaveDesc') : t('settings.autosaveDesc')}</span>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1 text-start">
+                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.autosaveLabel')}</span>
+                        <span className="text-xs opacity-60 font-medium">{t('settings.autosaveDesc')}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => updateData({ settings: { ...data.settings, autosaveEnabled: !data.settings.autosaveEnabled } })}
                         className={cn(
-                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer",
+                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer shrink-0",
                           data.settings.autosaveEnabled ? "bg-accent" : "bg-border"
                         )}
+                        aria-label={t('settings.autosaveLabel')}
                       >
                         <div className={cn(
                           "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
-                          data.settings.autosaveEnabled ? "left-1" : "left-7"
+                          data.settings.autosaveEnabled ? "start-7" : "start-1"
                         )} />
                       </button>
                     </div>
                   </CardContent>
                 </Card>
 
+                {/* Autosave Interval */}
                 {data.settings.autosaveEnabled && (
-                  <Card>
+                  <Card className="hover:border-border/60 transition-colors">
                     <CardContent className="pt-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-bold">{t('settings.autosaveIntervalLabel')}</span>
-                          <span className="text-xs opacity-50 font-medium">{t('settings.autosaveIntervalDesc')}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col gap-1 text-start">
+                          <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.autosaveIntervalLabel')}</span>
+                          <span className="text-xs opacity-60 font-medium">{t('settings.autosaveIntervalDesc')}</span>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 self-start sm:self-auto">
                           <input 
                             type="range" 
                             min="1" 
@@ -188,74 +200,51 @@ export function SettingsPage() {
                   </Card>
                 )}
 
-                <Card>
+                {/* Prompts Preview & Tooltips Switches */}
+                <Card className="hover:border-border/60 transition-colors">
                   <CardContent className="pt-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.promptPreviewLabel')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.promptPreviewDesc')}</span>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1 text-start">
+                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.promptPreviewLabel')}</span>
+                        <span className="text-xs opacity-60 font-medium">{t('settings.promptPreviewDesc')}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => updateData({ settings: { ...data.settings, showPromptPreview: !data.settings.showPromptPreview } })}
                         className={cn(
-                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer",
+                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer shrink-0",
                           data.settings.showPromptPreview ? "bg-accent" : "bg-border"
                         )}
+                        aria-label={t('settings.promptPreviewLabel')}
                       >
                         <div className={cn(
                           "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
-                          data.settings.showPromptPreview ? "left-1" : "left-7"
+                          data.settings.showPromptPreview ? "start-7" : "start-1"
                         )} />
                       </button>
                     </div>
 
                     <div className="h-[1px] bg-border/40 w-full" />
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.tooltipsLabel')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.tooltipsDesc')}</span>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col gap-1 text-start">
+                        <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.tooltipsLabel')}</span>
+                        <span className="text-xs opacity-60 font-medium">{t('settings.tooltipsDesc')}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => updateData({ settings: { ...data.settings, showTooltips: !data.settings.showTooltips } })}
                         className={cn(
-                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer",
+                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer shrink-0",
                           data.settings.showTooltips ? "bg-accent" : "bg-border"
                         )}
+                        aria-label={t('settings.tooltipsLabel')}
                       >
                         <div className={cn(
                           "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
-                          data.settings.showTooltips ? "left-1" : "left-7"
+                          data.settings.showTooltips ? "start-7" : "start-1"
                         )} />
                       </button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.dbLocationLabel')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.dbLocationDesc')}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={data.settings.databasePath}
-                          className="flex-1 bg-surface2-light dark:bg-surface2-dark border border-border/40 rounded-xl px-4 py-2.5 text-xs font-mono select-all text-slate-700 dark:text-slate-300"
-                        />
-                        <button 
-                          onClick={handleSelectDirectory}
-                          type="button" 
-                          className="px-6 bg-surface2-light dark:bg-surface2-dark border border-border/40 rounded-xl text-xs font-bold hover:bg-accent hover:text-white hover:border-accent transition-all cursor-pointer text-slate-700 dark:text-slate-200"
-                        >
-                          {t('settings.changePathBtn')}
-                        </button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -263,25 +252,36 @@ export function SettingsPage() {
             </section>
           )}
 
+          {/* 2. AI PROVIDERS */}
           {activeTab === 'ai' && (
-            <section className="space-y-4">
-              <h3 className="text-xl font-black flex items-center gap-3">
-                <Sparkles className="w-6 h-6 text-success" />
-                {t('settings.aiTitle')}
+            <section className="space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2.5 px-1">
+                <Sparkles className="w-5 h-5 text-accent" />
+                {t('settings.tabAIProviders')}
               </h3>
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <div className="p-4 bg-success/5 border border-success/20 rounded-2xl">
-                     <p className="text-xs font-medium leading-relaxed">{t('settings.aiDesc')}</p>
-                  </div>
 
-                   <div className="space-y-2">
+              <div className="p-4 bg-success/5 border border-success/20 rounded-2xl text-start">
+                 <p className="text-xs font-medium leading-relaxed text-slate-700 dark:text-slate-300">{t('settings.aiDesc')}</p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Gemini Provider Card */}
+                <Card className="hover:border-border/60 transition-colors">
+                  <CardContent className="pt-6 space-y-4 text-start">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold opacity-70 pr-1">Gemini API Key</label>
-                      {!!data.settings.geminiApiKey?.trim() && (
-                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
-                          <Check className="w-3 h-3 text-success" />
+                      <div className="flex flex-col gap-0.5">
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">Google Gemini</h4>
+                        <span className="text-[10px] opacity-60 font-medium">Power prompt enhancing with Gemini models</span>
+                      </div>
+                      {!!data.settings.geminiApiKey?.trim() ? (
+                        <span className="flex items-center gap-1 text-[9px] text-success font-black bg-success/5 border border-success/15 px-2 py-0.5 rounded-full select-none">
+                          <Check className="w-2.5 h-2.5" />
                           <span>{t('settings.apiKeyActive')}</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[9px] text-danger font-black bg-danger/5 border border-danger/15 px-2 py-0.5 rounded-full select-none">
+                          <X className="w-2.5 h-2.5" />
+                          <span>{lang === 'ar' ? 'غير نشط' : 'Inactive'}</span>
                         </span>
                       )}
                     </div>
@@ -298,20 +298,30 @@ export function SettingsPage() {
                       type="button"
                       loading={testingProvider === 'Gemini'}
                       onClick={() => testApiKey('Gemini', data.settings.geminiApiKey)}
+                      className="text-[11px] font-bold h-8"
                     >
                       {t('settings.testBtn').replace('{provider}', 'Gemini')}
                     </Button>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div className="h-[1px] bg-border/40 w-full my-4" />
-
-                  <div className="space-y-2">
+                {/* OpenAI Provider Card */}
+                <Card className="hover:border-border/60 transition-colors">
+                  <CardContent className="pt-6 space-y-4 text-start">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold opacity-70 pr-1">OpenAI API Key (ChatGPT / Copilot)</label>
-                      {!!data.settings.openaiApiKey?.trim() && (
-                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
-                          <Check className="w-3 h-3 text-success" />
+                      <div className="flex flex-col gap-0.5">
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">OpenAI GPT</h4>
+                        <span className="text-[10px] opacity-60 font-medium">Use GPT models to refine and polish prompts</span>
+                      </div>
+                      {!!data.settings.openaiApiKey?.trim() ? (
+                        <span className="flex items-center gap-1 text-[9px] text-success font-black bg-success/5 border border-success/15 px-2 py-0.5 rounded-full select-none">
+                          <Check className="w-2.5 h-2.5" />
                           <span>{t('settings.apiKeyActive')}</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[9px] text-danger font-black bg-danger/5 border border-danger/15 px-2 py-0.5 rounded-full select-none">
+                          <X className="w-2.5 h-2.5" />
+                          <span>{lang === 'ar' ? 'غير نشط' : 'Inactive'}</span>
                         </span>
                       )}
                     </div>
@@ -328,20 +338,30 @@ export function SettingsPage() {
                       type="button"
                       loading={testingProvider === 'OpenAI'}
                       onClick={() => testApiKey('OpenAI', data.settings.openaiApiKey)}
+                      className="text-[11px] font-bold h-8"
                     >
                       {t('settings.testBtn').replace('{provider}', 'OpenAI')}
                     </Button>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div className="h-[1px] bg-border/40 w-full my-4" />
-
-                  <div className="space-y-2">
+                {/* Anthropic Claude Card */}
+                <Card className="hover:border-border/60 transition-colors">
+                  <CardContent className="pt-6 space-y-4 text-start">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold opacity-70 pr-1">Anthropic API Key (Claude)</label>
-                      {!!data.settings.claudeApiKey?.trim() && (
-                        <span className="flex items-center gap-1 text-[10px] text-success font-black bg-success/5 border border-success/15 px-2.5 py-1 rounded-full">
-                          <Check className="w-3 h-3 text-success" />
+                      <div className="flex flex-col gap-0.5">
+                        <h4 className="font-black text-sm text-slate-800 dark:text-slate-100">Anthropic Claude</h4>
+                        <span className="text-[10px] opacity-60 font-medium">Utilize Claude models for smart AI assistance</span>
+                      </div>
+                      {!!data.settings.claudeApiKey?.trim() ? (
+                        <span className="flex items-center gap-1 text-[9px] text-success font-black bg-success/5 border border-success/15 px-2 py-0.5 rounded-full select-none">
+                          <Check className="w-2.5 h-2.5" />
                           <span>{t('settings.apiKeyActive')}</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[9px] text-danger font-black bg-danger/5 border border-danger/15 px-2 py-0.5 rounded-full select-none">
+                          <X className="w-2.5 h-2.5" />
+                          <span>{lang === 'ar' ? 'غير نشط' : 'Inactive'}</span>
                         </span>
                       )}
                     </div>
@@ -358,258 +378,288 @@ export function SettingsPage() {
                       type="button"
                       loading={testingProvider === 'Anthropic'}
                       onClick={() => testApiKey('Anthropic', data.settings.claudeApiKey)}
+                      className="text-[11px] font-bold h-8"
                     >
                       {t('settings.testBtn').replace('{provider}', 'Anthropic')}
                     </Button>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <p className="text-[10px] opacity-50 font-bold pr-1 pt-2">{t('settings.keyStoredNote')}</p>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          {activeTab === 'cloud' && (
-            <section className="space-y-4">
-              <h3 className="text-xl font-black flex items-center gap-3">
-                <Cloud className="w-6 h-6 text-info" />
-                {t('settings.cloudTitle')}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <Card className={cn(data.settings.googleDriveEnabled && "border-info/30")}>
-                    <CardContent className="pt-6 space-y-4">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
-                             <Globe className="w-6 h-6 text-info" />
-                          </div>
-                          <div className="flex flex-col">
-                             <span className="font-bold">Google Drive</span>
-                             <span className="text-[10px] opacity-40 font-black">{t('settings.googleDriveDesc')}</span>
-                          </div>
-                       </div>
-                       
-                       {data.settings.googleDriveEnabled && (
-                          <div className="space-y-2">
-                             <Input 
-                               label="رمز الوصول السحابي (Access Token)"
-                               placeholder={t('settings.googleDriveTokenPlaceholder')}
-                               type="password"
-                               value={data.settings.googleDriveApiKey || ''}
-                               onChange={e => updateData({ settings: { ...data.settings, googleDriveApiKey: e.target.value } })}
-                             />
-                             <Button 
-                               size="sm" 
-                               variant="ghost" 
-                               type="button"
-                               onClick={() => testApiKey('Google Drive Sync', data.settings.googleDriveApiKey)}
-                             >
-                               {t('settings.testCloudBtn')}
-                             </Button>
-                          </div>
-                       )}
-
-                       <Button 
-                         variant={data.settings.googleDriveEnabled ? 'secondary' : 'primary'} 
-                         className="w-full cursor-pointer font-bold"
-                         type="button"
-                         onClick={() => updateData({ settings: { ...data.settings, googleDriveEnabled: !data.settings.googleDriveEnabled } })}
-                       >
-                          {data.settings.googleDriveEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
-                       </Button>
-                    </CardContent>
-                 </Card>
-
-                 <Card className={cn(data.settings.dropboxEnabled && "border-info/30")}>
-                    <CardContent className="pt-6 space-y-4">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
-                             <Database className="w-6 h-6 text-info" />
-                          </div>
-                          <div className="flex flex-col">
-                             <span className="font-bold">Dropbox</span>
-                             <span className="text-[10px] opacity-40 font-black">{t('settings.dropboxDesc')}</span>
-                          </div>
-                       </div>
-
-                       {data.settings.dropboxEnabled && (
-                          <div className="space-y-2">
-                            <Input 
-                              label="مفتاح التطبيق (Dropbox Access Token)"
-                              placeholder={t('settings.dropboxTokenPlaceholder')}
-                              type="password"
-                              value={data.settings.dropboxApiKey || ''}
-                              onChange={e => updateData({ settings: { ...data.settings, dropboxApiKey: e.target.value } })}
-                            />
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              type="button"
-                              onClick={() => testApiKey('Dropbox Sync', data.settings.dropboxApiKey)}
-                            >
-                              {t('settings.testCloudBtn')}
-                            </Button>
-                          </div>
-                       )}
-
-                       <Button 
-                         variant={data.settings.dropboxEnabled ? 'secondary' : 'primary'} 
-                         className="w-full cursor-pointer font-bold"
-                         type="button"
-                         onClick={() => updateData({ settings: { ...data.settings, dropboxEnabled: !data.settings.dropboxEnabled } })}
-                       >
-                          {data.settings.dropboxEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
-                       </Button>
-                    </CardContent>
-                 </Card>
+                <p className="text-[10px] opacity-50 font-bold px-1 text-start">{t('settings.keyStoredNote')}</p>
               </div>
             </section>
           )}
 
-          {activeTab === 'backup' && (
-             <section className="space-y-6">
-                <h3 className="text-xl font-black flex items-center gap-3">
-                  <Shield className="w-6 h-6 text-success" />
-                  {t('settings.backupTitle')}
-                </h3>
-                
-                <Card>
-                  <CardHeader title={t('settings.backupEnableLabel')} />
-                  <CardContent className="space-y-6 pt-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold">{t('settings.backupEnableLabel')}</span>
-                        <span className="text-xs opacity-50 font-medium">{t('settings.backupEnableDesc')}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateData({ settings: { ...data.settings, backupEnabled: !data.settings.backupEnabled } })}
-                        className={cn(
-                          "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer",
-                          data.settings.backupEnabled ? "bg-accent" : "bg-border"
-                        )}
-                      >
-                        <div className={cn(
-                          "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
-                          data.settings.backupEnabled ? "left-1" : "left-7"
-                        )} />
-                      </button>
+          {/* 3. DATA & SAFETY */}
+          {activeTab === 'data' && (
+            <section className="space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2.5 px-1">
+                <Shield className="w-5 h-5 text-accent" />
+                {t('settings.tabDataSafety')}
+              </h3>
+
+              {/* Database Path Location Card */}
+              <Card className="hover:border-border/60 transition-colors">
+                <CardContent className="pt-6 text-start space-y-4">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.dbLocationLabel')}</span>
+                    <span className="text-xs opacity-60 font-medium">{t('settings.dbLocationDesc')}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={data.settings.databasePath}
+                      className="flex-1 bg-surface2-light dark:bg-surface2-dark border border-border/40 rounded-xl px-4 py-2.5 text-xs font-mono select-all text-slate-700 dark:text-slate-300 outline-none"
+                    />
+                    <button 
+                      onClick={handleSelectDirectory}
+                      type="button" 
+                      className="px-6 h-10 sm:h-auto bg-surface2-light dark:bg-surface2-dark border border-border/40 rounded-xl text-xs font-bold hover:bg-accent hover:text-white hover:border-accent transition-all cursor-pointer text-slate-700 dark:text-slate-200"
+                    >
+                      {t('settings.changePathBtn')}
+                    </button>
+                  </div>
+                  <div className="p-3 bg-accent/5 border border-accent/15 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                    {lang === 'ar' 
+                      ? '🔒 جميع برومبتاتك، وسومك وتصنيفاتك يتم حفظها محلياً على جهازك ولا تُرسل لأي سحابة أو جهة خارجية.' 
+                      : '🔒 All your prompts, tags, and categories are saved locally on your machine and are never shared with any cloud servers.'}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Backup Settings Card */}
+              <Card className="hover:border-border/60 transition-colors">
+                <CardHeader title={t('settings.backupTitle')} />
+                <CardContent className="space-y-6 pt-4 text-start">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.backupEnableLabel')}</span>
+                      <span className="text-xs opacity-60 font-medium">{t('settings.backupEnableDesc')}</span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => updateData({ settings: { ...data.settings, backupEnabled: !data.settings.backupEnabled } })}
+                      className={cn(
+                        "w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer shrink-0",
+                        data.settings.backupEnabled ? "bg-accent" : "bg-border"
+                      )}
+                    >
+                      <div className={cn(
+                        "absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm",
+                        data.settings.backupEnabled ? "start-7" : "start-1"
+                      )} />
+                    </button>
+                  </div>
 
-                    {data.settings.backupEnabled && (
-                      <>
-                        <div className="h-[1px] bg-border/40 w-full" />
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-bold">{t('settings.backupFreqLabel')}</span>
-                            <span className="text-xs opacity-50 font-medium">{t('settings.backupFreqDesc')}</span>
-                          </div>
-                          <select
-                            value={data.settings.backupFrequency || 'daily'}
-                            onChange={e => updateData({ settings: { ...data.settings, backupFrequency: e.target.value as any } })}
-                            className="h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200"
-                          >
-                            <option value="daily">{t('settings.backupFreqDaily')}</option>
-                            <option value="weekly">{t('settings.backupFreqWeekly')}</option>
-                            <option value="monthly">{t('settings.backupFreqMonthly')}</option>
-                          </select>
+                  {data.settings.backupEnabled && (
+                    <>
+                      <div className="h-[1px] bg-border/40 w-full" />
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.backupFreqLabel')}</span>
+                          <span className="text-xs opacity-60 font-medium">{t('settings.backupFreqDesc')}</span>
                         </div>
-
-                        <div className="h-[1px] bg-border/40 w-full" />
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-bold">{t('settings.backupRetentionLabel')}</span>
-                            <span className="text-xs opacity-50 font-medium">{t('settings.backupRetentionDesc')}</span>
-                          </div>
-                          <input
-                            type="number"
-                            min="1"
-                            max="50"
-                            value={data.settings.backupRetention || 5}
-                            onChange={e => updateData({ settings: { ...data.settings, backupRetention: parseInt(e.target.value) || 5 } })}
-                            className="w-20 h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none text-center text-slate-700 dark:text-slate-200"
-                          />
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                    <CardContent className="pt-6 space-y-4">
-                      <p className="text-xs font-bold leading-relaxed opacity-70">
-                          {t('settings.localFirstNote')}
-                      </p>
-                      <div className="flex flex-wrap gap-3 pt-2">
-                        <Button variant="secondary" type="button" onClick={triggerManualBackup} className="font-bold">
-                          {t('settings.backupNowBtn')}
-                        </Button>
-                        <Button variant="ghost" type="button" onClick={() => navigate('/backups')} className="font-bold">
-                          {t('settings.manageBackupsBtn')}
-                        </Button>
+                        <select
+                          value={data.settings.backupFrequency || 'daily'}
+                          onChange={e => updateData({ settings: { ...data.settings, backupFrequency: e.target.value as any } })}
+                          className="h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none cursor-pointer text-slate-700 dark:text-slate-200 min-w-[140px]"
+                        >
+                          <option value="daily">{t('settings.backupFreqDaily')}</option>
+                          <option value="weekly">{t('settings.backupFreqWeekly')}</option>
+                          <option value="monthly">{t('settings.backupFreqMonthly')}</option>
+                        </select>
                       </div>
-                    </CardContent>
-                </Card>
-             </section>
+
+                      <div className="h-[1px] bg-border/40 w-full" />
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-bold text-sm text-slate-800 dark:text-slate-100">{t('settings.backupRetentionLabel')}</span>
+                          <span className="text-xs opacity-60 font-medium">{t('settings.backupRetentionDesc')}</span>
+                        </div>
+                        <input
+                          type="number"
+                          min="1"
+                          max="50"
+                          value={data.settings.backupRetention || 5}
+                          onChange={e => updateData({ settings: { ...data.settings, backupRetention: parseInt(e.target.value) || 5 } })}
+                          className="w-20 h-10 px-3 bg-surface2-light dark:bg-surface2-dark border border-border/30 rounded-xl text-xs font-black outline-none text-center text-slate-700 dark:text-slate-200 self-start sm:self-auto"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <div className="h-[1px] bg-border/40 w-full" />
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <Button variant="secondary" type="button" onClick={triggerManualBackup} className="font-bold text-xs h-9">
+                      {t('settings.backupNowBtn')}
+                    </Button>
+                    <Button variant="ghost" type="button" onClick={() => navigate('/backups')} className="font-bold text-xs h-9">
+                      {t('settings.manageBackupsBtn')}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cloud Sync section */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-black text-slate-800 dark:text-slate-100 text-start px-1 flex items-center gap-2">
+                  <Cloud className="w-4 h-4 text-info" />
+                  {t('settings.cloudTitle')}
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {/* Google Drive Card */}
+                   <Card className={cn("hover:border-border/60 transition-colors text-start", data.settings.googleDriveEnabled && "border-info/30")}>
+                      <CardContent className="pt-6 space-y-4">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
+                               <Globe className="w-5 h-5 text-info" />
+                            </div>
+                            <div className="flex flex-col">
+                               <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Google Drive</span>
+                               <span className="text-[10px] opacity-50 font-black">{t('settings.googleDriveDesc')}</span>
+                            </div>
+                         </div>
+                         
+                         {data.settings.googleDriveEnabled && (
+                            <div className="space-y-2 pt-2">
+                               <Input 
+                                 label={lang === 'ar' ? 'رمز الوصول السحابي (Access Token)' : 'Access Token'}
+                                 placeholder={t('settings.googleDriveTokenPlaceholder')}
+                                 type="password"
+                                 value={data.settings.googleDriveApiKey || ''}
+                                 onChange={e => updateData({ settings: { ...data.settings, googleDriveApiKey: e.target.value } })}
+                               />
+                               <Button 
+                                 size="sm" 
+                                 variant="ghost" 
+                                 type="button"
+                                 onClick={() => testApiKey('Google Drive Sync', data.settings.googleDriveApiKey)}
+                                 className="text-[10px] h-8 font-bold"
+                               >
+                                 {t('settings.testCloudBtn')}
+                               </Button>
+                            </div>
+                         )}
+
+                         <Button 
+                           variant={data.settings.googleDriveEnabled ? 'secondary' : 'primary'} 
+                           className="w-full cursor-pointer font-bold text-xs h-9 mt-2"
+                           type="button"
+                           onClick={() => updateData({ settings: { ...data.settings, googleDriveEnabled: !data.settings.googleDriveEnabled } })}
+                         >
+                            {data.settings.googleDriveEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
+                         </Button>
+                      </CardContent>
+                   </Card>
+
+                   {/* Dropbox Card */}
+                   <Card className={cn("hover:border-border/60 transition-colors text-start", data.settings.dropboxEnabled && "border-info/30")}>
+                      <CardContent className="pt-6 space-y-4">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center shrink-0">
+                               <Database className="w-5 h-5 text-info" />
+                            </div>
+                            <div className="flex flex-col">
+                               <span className="font-bold text-sm text-slate-800 dark:text-slate-100">Dropbox</span>
+                               <span className="text-[10px] opacity-50 font-black">{t('settings.dropboxDesc')}</span>
+                            </div>
+                         </div>
+
+                         {data.settings.dropboxEnabled && (
+                            <div className="space-y-2 pt-2">
+                              <Input 
+                                label={lang === 'ar' ? 'مفتاح التطبيق (Dropbox Access Token)' : 'Dropbox Access Token'}
+                                placeholder={t('settings.dropboxTokenPlaceholder')}
+                                type="password"
+                                value={data.settings.dropboxApiKey || ''}
+                                onChange={e => updateData({ settings: { ...data.settings, dropboxApiKey: e.target.value } })}
+                              />
+                              <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                type="button"
+                                onClick={() => testApiKey('Dropbox Sync', data.settings.dropboxApiKey)}
+                                className="text-[10px] h-8 font-bold"
+                              >
+                                {t('settings.testCloudBtn')}
+                              </Button>
+                            </div>
+                         )}
+
+                         <Button 
+                           variant={data.settings.dropboxEnabled ? 'secondary' : 'primary'} 
+                           className="w-full cursor-pointer font-bold text-xs h-9 mt-2"
+                           type="button"
+                           onClick={() => updateData({ settings: { ...data.settings, dropboxEnabled: !data.settings.dropboxEnabled } })}
+                         >
+                            {data.settings.dropboxEnabled ? t('settings.cloudUnlinkBtn') : t('settings.cloudLinkBtn')}
+                         </Button>
+                      </CardContent>
+                   </Card>
+                </div>
+              </div>
+            </section>
           )}
 
-          {activeTab === 'shortcuts' && (
-            <section className="space-y-4">
-              <h3 className="text-xl font-black flex items-center gap-3">
-                <Keyboard className="w-6 h-6 text-accent" />
-                {t('settings.shortcutsTitle')}
+          {/* 4. APPLICATION & ABOUT */}
+          {activeTab === 'app' && (
+            <section className="space-y-6">
+              <h3 className="text-lg font-black flex items-center gap-2.5 px-1">
+                <Info className="w-5 h-5 text-accent" />
+                {t('settings.tabApplication')}
               </h3>
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <p className="text-xs font-medium opacity-60">{t('settings.shortcutsDesc')}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
-                      <span className="text-xs font-bold">{t('settings.shortcutSearch')}</span>
-                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+K</kbd>
+
+              {/* About Card */}
+              <Card className="hover:border-border/60 transition-colors">
+                <CardContent className="pt-6 space-y-6 text-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20 shrink-0">
+                      <Database className="text-white w-8 h-8" />
                     </div>
-                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
-                      <span className="text-xs font-bold">{t('settings.shortcutNewPrompt')}</span>
-                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+N</kbd>
+                    <div>
+                      <h4 className="text-base font-black leading-none text-slate-800 dark:text-slate-100">PromptVault</h4>
+                      <p className="text-xs opacity-60 mt-2 font-bold leading-relaxed">{t('settings.aboutDesc')}</p>
                     </div>
-                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
-                      <span className="text-xs font-bold">{t('settings.shortcutSave')}</span>
-                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+S</kbd>
+                  </div>
+                  
+                  <div className="h-[1px] bg-border/40 w-full" />
+                  
+                  <div className="space-y-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <div className="flex justify-between items-center">
+                      <span>{t('settings.aboutVersion')}</span>
+                      <span className="font-mono bg-surface2-light dark:bg-surface2-dark px-2 py-0.5 rounded-lg text-[10px]">v1.2.1</span>
                     </div>
-                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark rounded-xl">
-                      <span className="text-xs font-bold">{t('settings.shortcutToggleSidebar')}</span>
-                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm">Ctrl+B</kbd>
+                    <div className="flex justify-between items-center">
+                      <span>{t('settings.aboutAuthor')}</span>
+                      <span>Sufyan Aser</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </section>
-          )}
 
-          {activeTab === 'about' && (
-            <section className="space-y-4">
-              <h3 className="text-xl font-black flex items-center gap-3">
-                <Info className="w-6 h-6 text-accent" />
-                {t('settings.aboutTitle')}
-              </h3>
-              <Card>
-                <CardContent className="pt-6 space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center shadow-lg shadow-accent/20">
-                      <Database className="text-white w-10 h-10" />
+              {/* Shortcuts Card */}
+              <Card className="hover:border-border/60 transition-colors">
+                <CardHeader title={t('settings.shortcutsTitle')} />
+                <CardContent className="space-y-4 pt-2 text-start">
+                  <p className="text-xs font-medium opacity-65 leading-relaxed">{t('settings.shortcutsDesc')}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark/40 rounded-xl">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('settings.shortcutSearch')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm" dir="ltr">Ctrl+K</kbd>
                     </div>
-                    <div>
-                      <h4 className="text-lg font-black leading-none">PromptVault</h4>
-                      <p className="text-xs opacity-50 mt-1.5 font-bold">{t('settings.aboutDesc')}</p>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark/40 rounded-xl">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('settings.shortcutNewPrompt')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm" dir="ltr">Ctrl+N</kbd>
                     </div>
-                  </div>
-                  <div className="h-[1px] bg-border/40 w-full" />
-                  <div className="space-y-2.5 text-xs font-bold opacity-80">
-                    <div className="flex justify-between">
-                      <span>{t('settings.aboutVersion')}</span>
-                      <span className="font-mono">v1.2.1</span>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark/40 rounded-xl">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('settings.shortcutSave')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm" dir="ltr">Ctrl+S</kbd>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{t('settings.aboutAuthor')}</span>
-                      <span>Sufyan Aser</span>
+                    <div className="flex items-center justify-between p-3.5 bg-surface2-light dark:bg-surface2-dark/40 rounded-xl">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{t('settings.shortcutToggleSidebar')}</span>
+                      <kbd className="px-2.5 py-1 text-[10px] font-mono bg-white dark:bg-surface-dark border border-border/40 rounded-lg shadow-sm" dir="ltr">Ctrl+B</kbd>
                     </div>
                   </div>
                 </CardContent>

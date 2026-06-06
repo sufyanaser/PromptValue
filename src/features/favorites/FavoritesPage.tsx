@@ -4,10 +4,12 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Star, Copy, ExternalLink, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/cn';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export function FavoritesPage() {
   const { data, toggleFavorite, deletePrompt, t } = useApp();
+  const navigate = useNavigate();
   
   const favoritePrompts = data.prompts.filter(p => p.isFavorite);
 
@@ -53,10 +55,15 @@ export function FavoritesPage() {
         ))}
 
         {favoritePrompts.length === 0 && (
-          <div className="col-span-full py-32 text-center flex flex-col items-center gap-4">
-             <Star className="w-16 h-16 opacity-10" />
-             <p className="text-muted-light font-bold">{t('favorites.noFavorites')}</p>
-          </div>
+          <Card className="col-span-full p-8">
+            <EmptyState
+              icon={Star}
+              title={t('emptyStates.noFavoritesTitle')}
+              description={t('emptyStates.noFavoritesDesc')}
+              actionLabel={t('emptyStates.browsePromptsBtn')}
+              onAction={() => navigate('/prompts')}
+            />
+          </Card>
         )}
       </div>
     </div>

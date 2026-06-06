@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Hash, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { cn } from '../../lib/cn';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 import { getUniqueColor, PRESET_COLORS } from '../../lib/colors';
 
@@ -71,62 +72,76 @@ export function TagsPage() {
         }
       />
 
-      <div className="flex flex-wrap gap-4">
-         {data.tags.map(tag => {
-           const usage = getUsageCount(tag.name);
-           return (
-             <Card key={tag.id} className="min-w-[160px] hover:border-accent group relative overflow-hidden">
-               <CardContent className="pt-6 text-center">
-                 <div className="absolute top-2 start-2 flex gap-1">
-                   <button onClick={() => openEditModal(tag)} className="p-1 opacity-20 hover:opacity-100 text-info transition-opacity cursor-pointer"><Edit className="w-3.5 h-3.5" /></button>
-                   <button onClick={() => handleDelete(tag.id)} className="p-1 opacity-20 hover:opacity-100 text-danger transition-opacity cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
-                 </div>
-                 <div className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:bg-accent/10 transition-colors" style={{ backgroundColor: `${tag.color}15` }}>
-                    <Hash className="w-6 h-6" style={{ color: tag.color }} />
-                 </div>
-                 <h4 className="font-black text-sm mb-1">#{tag.name}</h4>
-                 <span className="text-[10px] font-black opacity-50 uppercase">{usage} {t('tags.usageCount')}</span>
-               </CardContent>
-             </Card>
-           );
-         })}
-      </div>
+      {data.tags.length === 0 ? (
+        <Card className="p-8">
+          <EmptyState
+            icon={Hash}
+            title={t('emptyStates.noTagsTitle')}
+            description={t('emptyStates.noTagsDesc')}
+            actionLabel={t('emptyStates.createFirstTagBtn')}
+            onAction={openCreateModal}
+          />
+        </Card>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-4">
+             {data.tags.map(tag => {
+               const usage = getUsageCount(tag.name);
+               return (
+                 <Card key={tag.id} className="min-w-[160px] hover:border-accent group relative overflow-hidden">
+                   <CardContent className="pt-6 text-center">
+                     <div className="absolute top-2 start-2 flex gap-1">
+                       <button onClick={() => openEditModal(tag)} className="p-1 opacity-20 hover:opacity-100 text-info transition-opacity cursor-pointer"><Edit className="w-3.5 h-3.5" /></button>
+                       <button onClick={() => handleDelete(tag.id)} className="p-1 opacity-20 hover:opacity-100 text-danger transition-opacity cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+                     </div>
+                     <div className="w-12 h-12 rounded-2xl mx-auto mb-4 flex items-center justify-center group-hover:bg-accent/10 transition-colors" style={{ backgroundColor: `${tag.color}15` }}>
+                        <Hash className="w-6 h-6" style={{ color: tag.color }} />
+                     </div>
+                     <h4 className="font-black text-sm mb-1">#{tag.name}</h4>
+                     <span className="text-[10px] font-black opacity-50 uppercase">{usage} {t('tags.usageCount')}</span>
+                   </CardContent>
+                 </Card>
+               );
+             })}
+          </div>
 
-       <Card>
-        <CardHeader title={t('tags.title')} />
-        <div className="overflow-x-auto">
-           <table className="w-full text-start">
-              <thead>
-                <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black tracking-widest text-muted-light dark:text-muted-dark border-b border-border/40 uppercase">
-                  <th className="px-6 py-4">{t('tags.nameLabel')}</th>
-                  <th className="px-6 py-4">{t('categories.createdDate')}</th>
-                  <th className="px-6 py-4">{t('tags.usageCount')}</th>
-                  <th className="px-6 py-4 text-center">{t('categories.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/20">
-                {data.tags.map(tag => {
-                  const usage = getUsageCount(tag.name);
-                  return (
-                    <tr key={tag.id} className="hover:bg-surface2-light/30">
-                      <td className="px-6 py-4 text-sm font-bold">#{tag.name}</td>
-                      <td className="px-6 py-4">
-                         <span className="w-4 h-4 rounded-full inline-block" style={{ backgroundColor: tag.color }} />
-                      </td>
-                      <td className="px-6 py-4 text-xs font-black">{usage}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-center gap-2">
-                           <button onClick={() => openEditModal(tag)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all cursor-pointer"><Edit className="w-4 h-4" /></button>
-                           <button onClick={() => handleDelete(tag.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
+          <Card>
+            <CardHeader title={t('tags.title')} />
+            <div className="overflow-x-auto">
+               <table className="w-full text-start">
+                  <thead>
+                    <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black tracking-widest text-muted-light dark:text-muted-dark border-b border-border/40 uppercase">
+                      <th className="px-6 py-4">{t('tags.nameLabel')}</th>
+                      <th className="px-6 py-4">{t('categories.createdDate')}</th>
+                      <th className="px-6 py-4">{t('tags.usageCount')}</th>
+                      <th className="px-6 py-4 text-center">{t('categories.actions')}</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-           </table>
-        </div>
-      </Card>
+                  </thead>
+                  <tbody className="divide-y divide-border/20">
+                    {data.tags.map(tag => {
+                      const usage = getUsageCount(tag.name);
+                      return (
+                        <tr key={tag.id} className="hover:bg-surface2-light/30">
+                          <td className="px-6 py-4 text-sm font-bold">#{tag.name}</td>
+                          <td className="px-6 py-4">
+                             <span className="w-4 h-4 rounded-full inline-block" style={{ backgroundColor: tag.color }} />
+                          </td>
+                          <td className="px-6 py-4 text-xs font-black">{usage}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                               <button onClick={() => openEditModal(tag)} className="p-1.5 rounded-lg hover:bg-info/10 text-info transition-all cursor-pointer"><Edit className="w-4 h-4" /></button>
+                               <button onClick={() => handleDelete(tag.id)} className="p-1.5 rounded-lg hover:bg-danger/10 text-danger transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+               </table>
+            </div>
+          </Card>
+        </>
+      )}
 
       {/* Modal Dialog */}
       {isModalOpen && (

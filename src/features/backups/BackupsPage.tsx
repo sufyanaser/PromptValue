@@ -5,6 +5,7 @@ import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { History, Shield, Cloud, HardDrive, RefreshCw, Trash2, CheckCircle } from 'lucide-react';
 import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export function BackupsPage() {
   const { data, createBackup, restoreBackup, deleteBackup, showToast, confirm, t, lang } = useApp();
@@ -52,48 +53,53 @@ export function BackupsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          <Card className="lg:col-span-2">
             <CardHeader title={t('backups.historyTitle')} subtitle={t('backups.historySub')} />
-            <div className="overflow-x-auto">
-              <table className="w-full text-start border-collapse">
-                 <thead>
-                   <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black uppercase text-muted-light dark:text-muted-dark border-b border-border/40">
-                     <th className="px-6 py-4 text-start">{t('backups.dateLabel')}</th>
-                     <th className="px-6 py-4 text-start">{t('backups.typeLabel')}</th>
-                     <th className="px-6 py-4 text-start">{t('backups.sizeLabel')}</th>
-                     <th className="px-6 py-4 text-start">{t('backups.statusLabel')}</th>
-                     <th className="px-6 py-4 text-center">{t('common.actions')}</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-border/20">
-                    {data.backups.map((b) => (
-                      <tr key={b.id} className="hover:bg-surface2-light/30">
-                         <td className="px-6 py-4 text-start text-xs font-bold font-mono">
-                            {new Date(b.createdAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}
-                         </td>
-                         <td className="px-6 py-4 text-start text-xs font-medium">
-                            {b.type === 'auto' ? t('backups.autoBackups') : t('backups.manualBackups')}
-                         </td>
-                         <td className="px-6 py-4 text-start text-[10px] font-black">{b.size}</td>
-                         <td className="px-6 py-4 text-start">
-                            <Badge variant={b.status === 'success' ? 'success' : 'danger'}>
-                              {b.status === 'success' ? t('backups.successStatus') : t('backups.failStatus')}
-                            </Badge>
-                         </td>
-                         <td className="px-6 py-4 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                               <button onClick={() => handleRestore(b.id)} className="text-[10px] font-black text-accent underline">{t('backups.restoreBtn')}</button>
-                               <button onClick={() => handleDelete(b.id)} className="text-[10px] font-black text-danger/60 hover:text-danger underline">{t('backups.deleteBtn')}</button>
-                            </div>
-                         </td>
-                      </tr>
-                    ))}
-                    {data.backups.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="py-12 text-center text-xs opacity-50 italic">{t('backups.noBackups')}</td>
-                      </tr>
-                    )}
-                 </tbody>
-              </table>
-            </div>
+            {data.backups.length === 0 ? (
+              <EmptyState
+                icon={History}
+                title={t('emptyStates.noBackupsTitle')}
+                description={t('emptyStates.noBackupsDesc')}
+                actionLabel={t('emptyStates.createFirstBackupBtn')}
+                onAction={handleCreateBackup}
+              />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-start border-collapse">
+                   <thead>
+                     <tr className="bg-surface2-light dark:bg-surface2-dark text-[11px] font-black uppercase text-muted-light dark:text-muted-dark border-b border-border/40">
+                       <th className="px-6 py-4 text-start">{t('backups.dateLabel')}</th>
+                       <th className="px-6 py-4 text-start">{t('backups.typeLabel')}</th>
+                       <th className="px-6 py-4 text-start">{t('backups.sizeLabel')}</th>
+                       <th className="px-6 py-4 text-start">{t('backups.statusLabel')}</th>
+                       <th className="px-6 py-4 text-center">{t('common.actions')}</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-border/20">
+                      {data.backups.map((b) => (
+                        <tr key={b.id} className="hover:bg-surface2-light/30">
+                           <td className="px-6 py-4 text-start text-xs font-bold font-mono">
+                              {new Date(b.createdAt).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US')}
+                           </td>
+                           <td className="px-6 py-4 text-start text-xs font-medium">
+                              {b.type === 'auto' ? t('backups.autoBackups') : t('backups.manualBackups')}
+                           </td>
+                           <td className="px-6 py-4 text-start text-[10px] font-black">{b.size}</td>
+                           <td className="px-6 py-4 text-start">
+                              <Badge variant={b.status === 'success' ? 'success' : 'danger'}>
+                                {b.status === 'success' ? t('backups.successStatus') : t('backups.failStatus')}
+                              </Badge>
+                           </td>
+                           <td className="px-6 py-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                 <button onClick={() => handleRestore(b.id)} className="text-[10px] font-black text-accent underline">{t('backups.restoreBtn')}</button>
+                                 <button onClick={() => handleDelete(b.id)} className="text-[10px] font-black text-danger/60 hover:text-danger underline">{t('backups.deleteBtn')}</button>
+                              </div>
+                           </td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+              </div>
+            )}
          </Card>
 
           <div className="space-y-6">
